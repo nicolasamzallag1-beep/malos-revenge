@@ -358,23 +358,36 @@
       .hudCard{ min-width: 120px; }
     }
   
+
     /* Animation doigt d'honneur (grosse et animée) */
     .middleFinger{
       position:absolute;
-      font-size: 64px;
+      font-size: 72px;
       z-index:90;
       pointer-events:none;
-      animation: fingerPop 1.2s ease-out forwards;
-      text-shadow: 0 0 20px rgba(255,255,255,.6), 0 8px 30px rgba(0,0,0,.5);
+      animation: fingerPop 1.15s cubic-bezier(.16,1,.3,1) forwards;
+      text-shadow: 0 0 20px rgba(255,255,255,.55), 0 10px 34px rgba(0,0,0,.55);
+      filter: drop-shadow(0 18px 26px rgba(0,0,0,.35));
+      will-change: transform, opacity;
     }
     @keyframes fingerPop{
-      0%{ transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity:0; }
-      15%{ transform: translate(-50%,-50%) scale(1.3) rotate(10deg); opacity:1; }
-      35%{ transform: translate(-50%,-50%) scale(1.1) rotate(-5deg); opacity:1; }
-      70%{ transform: translate(-50%,-50%) scale(1.15) rotate(3deg); opacity:1; }
-      100%{ transform: translate(-50%,-50%) scale(0.8) rotate(0deg); opacity:0; }
+      0%{ transform: translate(-50%,-50%) scale(0) rotate(var(--r, -16deg)); opacity:0; }
+      14%{ transform: translate(-50%,-50%) scale(1.55) rotate(calc(var(--r, -16deg) * -0.35)); opacity:1; }
+      34%{ transform: translate(-50%,-50%) scale(1.25) rotate(calc(var(--r, -16deg) * 0.25)); opacity:1; }
+      72%{ transform: translate(-50%,-50%) scale(1.32) rotate(calc(var(--r, -16deg) * -0.15)); opacity:1; }
+      100%{ transform: translate(-50%,-50%) scale(0.88) rotate(0deg); opacity:0; }
     }
-  </style>
+
+    /* Micro screen shake (feel de hit) */
+    #game.shake{ animation: shake .28s ease-out; }
+    @keyframes shake{
+      0%{ transform: translate3d(0,0,0); }
+      18%{ transform: translate3d(-3px, 2px,0) rotate(-0.2deg); }
+      38%{ transform: translate3d(3px, -2px,0) rotate(0.2deg); }
+      60%{ transform: translate3d(-2px, -1px,0) rotate(-0.1deg); }
+      100%{ transform: translate3d(0,0,0); }
+    }
+</style>
 </head>
 <body>
   <div id="game">
@@ -395,11 +408,11 @@
     <div id="combo"></div>
 
     <div id="start">
-      <div style="display:flex;gap:12px;margin-bottom:20px;">
-        <img src="./malo.jpg" alt="Malo" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.4);">
-        <img src="./marie.jpg" alt="Marie" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.4);">
-        <img src="./nico.jpg" alt="Nico" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.4);">
-        <img src="./valentine.jpg" alt="Valentine" style="width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,255,255,.3);object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,.4);">
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;">
+        <img src="./malo.jpg" alt="Malo" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-2deg);">
+        <img src="./marie.jpg" alt="Marie" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(1deg);">
+        <img src="./nico.jpg" alt="Nico" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-1deg);">
+        <img src="./valentine.jpg" alt="Valentine" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(2deg);">
       </div>
       <h1 class="title">MALO'S REVENGE</h1>
       <div class="panel">
@@ -444,6 +457,12 @@
       insane: { speed: 5.5, spawnMs: 780,  duration: 60, points: 40 },
     };
 
+    // --- FEEL / JOUABILITÉ (ajouts) ---
+    // Un arc léger + une durée de vol adaptative = lancers plus naturels et qui atteignent vraiment la cible.
+    const GRAVITY = 2600; // px/s²
+    const AIM_ASSIST_RADIUS = 120; // px (snap doux vers la tête la plus proche)
+
+
     /**********************
      *  HIT MESSAGES (TES PHRASES — CONSERVÉES)
      **********************/
@@ -457,6 +476,10 @@
         // extras
         "Frérot… c'était pas ton jour.",
         "Ok, j'avoue… bien joué.",
+      
+        // ajouts
+        "Encore ? Tu t'acharnes, champion.",
+        "Aïe. Même le clown a eu mal.",
       ],
       marie: [
         "Je vais te gifler !",
@@ -467,6 +490,10 @@
         // extras
         "Ça va finir au tribunal.",
         "C'est officiel: tu cherches.",
+      
+        // ajouts
+        "Je te préviens… ça va partir.",
+        "Ok. Là c'est personnel.",
       ],
       ptitnico: [
         "Rastafarai !",
@@ -477,6 +504,10 @@
         // extras
         "La vibe est cassée.",
         "C'est pas très zen ça.",
+      
+        // ajouts
+        "Pas très peace & love ça…",
+        "Tu brises l'harmonie cosmique.",
       ],
       valentine: [
         "Elle coûte cher !",
@@ -487,6 +518,10 @@
         // extras
         "Retourne en version gratuite.",
         "Désolée, c'est premium ici.",
+      
+        // ajouts
+        "Ajoute au panier: 1 humiliation.",
+        "Ça va te coûter une excuse.",
       ],
     };
 
@@ -495,6 +530,11 @@
       "Oups. Mauvaise trajectoire, bonne intention.",
       "Tu visais la tête, pas l’ambiance.",
       "Ça frôle… mais non.",
+    
+      // ajouts (plus de variété)
+      "Tu as lancé avec le cœur. Le verre, lui, a fui.",
+      "C'était ambitieux. Trop.",
+      "Le cirque applaudit… mais pas pour toi.",
     ];
 
     const finalMessages = [
@@ -767,6 +807,17 @@
         tone(330, t + 0.03, 0.09, "sine", 0.05, sfxBus);
       }
 
+      // SFX: combo (petit cri de victoire)
+      function sfxCombo(n){
+        if (!state.enabled) return;
+        const t = now();
+        const base = 520 + Math.min(420, n*18);
+        tone(base, t, 0.08, "square", 0.09, sfxBus);
+        tone(base*1.33, t+0.04, 0.10, "triangle", 0.07, sfxBus);
+        noise(t+0.02, 0.06, 0.06, 5200, sfxBus);
+      }
+
+
       // Music: upbeat electro/chiptune-ish groove
       // Pattern: kick/snare/hat + bass + arp lead
       const kickSteps = new Set([0, 4, 8, 12, 14]);
@@ -850,6 +901,7 @@
         sfxThrow,
         sfxHit,
         sfxMiss,
+        sfxCombo,
         async resume(){
           if (ctxA.state === "suspended") {
             try { await ctxA.resume(); } catch(e) {}
@@ -899,6 +951,7 @@
         spawnT:0,
         lastT:0,
         timerId:null,
+        pointer: { x: window.innerWidth/2, y: window.innerHeight/2, has:false },
       };
     }
 
@@ -1039,53 +1092,96 @@
      *  PROJECTILES (LANCER DE VERRE DE VIN — PRO)
      **********************/
     function throwWine(tx, ty){
+      // Origine du lancer (bas centre)
       const fromX = window.innerWidth / 2;
-      const fromY = window.innerHeight - 80;
+      const fromY = window.innerHeight - 84;
 
-      const dx = tx - fromX;
-      const dy = ty - fromY;
+      // AIM ASSIST: si tu cliques proche d'une tête, ça "snap" doucement sur le centre
+      let ax = tx, ay = ty;
+      let best = null;
+      let bestD = 1e9;
+      for (const t of S.targets){
+        const cx = t.x + t.size/2;
+        const cy = t.y + t.size/2;
+        const d = Math.hypot(ax - cx, ay - cy);
+        if (d < bestD){ bestD = d; best = {cx, cy}; }
+      }
+      if (best && bestD <= AIM_ASSIST_RADIUS){
+        ax = best.cx;
+        ay = best.cy;
+      }
+
+      const dx = ax - fromX;
+      const dy = ay - fromY;
       const dist = Math.max(1, Math.hypot(dx, dy));
 
-      const speed = 1200; // px/s
-      const vx = (dx / dist) * speed;
-      const vy = (dy / dist) * speed;
+      // Durée adaptative => le verre arrive vraiment à l'endroit visé
+      const baseSpeed = 1550; // px/s (plus nerveux)
+      const dur = clamp(dist / baseSpeed, 0.18, 0.62);
+
+      // Balistique légère (arc) : vy initial compense la gravité
+      const vx = dx / dur;
+      const vy = (dy - 0.5 * GRAVITY * dur * dur) / dur;
 
       S.projectiles.push({
         x: fromX,
         y: fromY,
         vx,
         vy,
-        life: 0.55, // seconds
+        life: dur + 0.35,
         rot: rand(0, Math.PI*2),
-        rvel: rand(-10, 10),
+        rvel: rand(-12, 12),
+        sparkle: 1.0,
       });
+
+      // Petit flash de départ (feedback)
+      for (let i=0;i<10;i++){
+        S.particles.push({
+          x: fromX,
+          y: fromY,
+          vx: rand(-220,220),
+          vy: rand(-380,-120),
+          life: rand(0.12, 0.22),
+          size: rand(2,4),
+          col: `rgba(251,191,36,${rand(0.25,0.75)})`,
+        });
+      }
     }
 
     function updateProjectiles(dt){
       for (let i=S.projectiles.length-1;i>=0;i--){
         const p = S.projectiles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
+
+        // physics
+        p.vy += GRAVITY * dt;
+        p.x  += p.vx * dt;
+        p.y  += p.vy * dt;
         p.rot += p.rvel * dt;
         p.life -= dt;
 
-        // trail particles
-        if (Math.random() < 0.8){
-          S.particles.push({
-            x: p.x,
-            y: p.y,
-            vx: rand(-40,40),
-            vy: rand(-40,40),
-            life: rand(0.16, 0.26),
-            size: rand(2,4),
-            col: `rgba(251,191,36,${rand(0.35,0.75)})`,
-          });
+        // trail particles (plus sexy)
+        const tN = (S.d === "insane") ? 3 : 2;
+        for (let k=0;k<tN;k++){
+          if (Math.random() < 0.95){
+            const wine = Math.random() < 0.35;
+            S.particles.push({
+              x: p.x + rand(-6,6),
+              y: p.y + rand(-6,6),
+              vx: rand(-60,60),
+              vy: rand(-60,60),
+              life: rand(0.12, 0.22),
+              size: rand(2,4),
+              col: wine
+                ? `rgba(251,113,133,${rand(0.25,0.65)})`  // rosé-chaos
+                : `rgba(251,191,36,${rand(0.25,0.75)})`, // or du verre
+            });
+          }
         }
 
-        if (p.life <= 0 || p.x < -80 || p.x > window.innerWidth+80 || p.y < -80 || p.y > window.innerHeight+80){
+        if (p.life <= 0 || p.x < -120 || p.x > window.innerWidth+120 || p.y < -140 || p.y > window.innerHeight+140){
           S.projectiles.splice(i,1);
           // small miss feedback (sometimes)
-          if (Math.random() < 0.4){
+          if (Math.random() < 0.45){
             audio?.sfxMiss?.();
             showHitBubble(pick(missMessages), clamp(p.x, 60, window.innerWidth-60), clamp(p.y, 80, window.innerHeight-120), "Miss");
           }
@@ -1150,6 +1246,26 @@
 
     function drawParticles(){
       for (const p of S.particles){
+        // Ring marker (vx=vy=0 and transparent color)
+        if (p.vx === 0 && p.vy === 0 && p.col === "rgba(255,255,255,.0)"){
+          const t = clamp(p.life / 0.22, 0, 1);
+          const rr = 18 + (1 - t) * 34;
+          ctx.save();
+          ctx.globalAlpha = t;
+          ctx.strokeStyle = "rgba(34,211,238,.55)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, rr, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.strokeStyle = "rgba(124,58,237,.35)";
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, rr + 6, 0, Math.PI*2);
+          ctx.stroke();
+          ctx.restore();
+          continue;
+        }
+
         ctx.fillStyle = p.col;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
@@ -1182,12 +1298,21 @@
             // effects
             audio?.sfxHit?.();
             burst(cx, cy);
-            // Doigt d'honneur GROS et ANIMÉ
+            // micro shake + ring
+            gameEl.classList.remove("shake");
+            void gameEl.offsetWidth;
+            gameEl.classList.add("shake");
+
+            // ring visuel (quick)
+            S.particles.push({ x: cx, y: cy, vx: 0, vy: 0, life: 0.22, size: 2, col: "rgba(255,255,255,.0)" });
+
+            // Doigt d'honneur GROS et ANIMÉ (feedback de hit)
             const finger = document.createElement("div");
             finger.className = "middleFinger";
             finger.textContent = "🖕";
             finger.style.left = cx + "px";
             finger.style.top = cy + "px";
+            finger.style.setProperty("--r", (rand(-22, 22)).toFixed(1) + "deg");
             gameEl.appendChild(finger);
             setTimeout(() => finger.remove(), 1200);
 
@@ -1197,6 +1322,7 @@
 
             if (S.combo === 3 || S.combo === 5 || (S.combo > 5 && S.combo % 5 === 0)){
               showCombo(S.combo);
+              audio?.sfxCombo?.(S.combo);
             }
 
             break;
@@ -1240,6 +1366,7 @@
       drawParticles();
       drawTargets();
       drawProjectiles();
+      drawAim();
 
       requestAnimationFrame(loop);
     }
@@ -1318,7 +1445,22 @@
     /**********************
      *  INPUTS
      **********************/
-    canvas.addEventListener("click", async (e) => {
+    
+    // Suivi du viseur (plus jouable)
+    canvas.addEventListener("pointermove", (e) => {
+      if (!S) return;
+      const rect = canvas.getBoundingClientRect();
+      S.pointer.x = e.clientX - rect.left;
+      S.pointer.y = e.clientY - rect.top;
+      S.pointer.has = true;
+    });
+
+    canvas.addEventListener("pointerleave", () => {
+      if (!S) return;
+      S.pointer.has = false;
+    });
+
+canvas.addEventListener("click", async (e) => {
       if (!S.running || S.paused) return;
       await ensureAudio();
       initAudio().sfxThrow();
@@ -1335,12 +1477,6 @@
 
     restartBtn.addEventListener("click", restart);
     pauseBtn.addEventListener("click", togglePause);
-
-    // Bouton restart pendant le jeu
-    document.getElementById("restartGameBtn").addEventListener("click", () => {
-      if (S.running) endGame();
-      restart();
-    });
 
     soundBtn.addEventListener("click", async () => {
       await ensureAudio();
