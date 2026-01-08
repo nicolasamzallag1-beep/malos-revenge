@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malo's Revenge - Jeu de Massacre Trash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-family: 'Orbitron', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
             cursor: none;
@@ -24,7 +25,7 @@
             position: relative;
             background: 
                 repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px),
-                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+                linear-gradient(135deg, #0a0e27 0%, #16213e 100%);
         }
 
         #cursor {
@@ -42,7 +43,7 @@
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             padding: 20px;
             border-radius: 15px;
             border: 3px solid #ff6b6b;
@@ -55,17 +56,20 @@
             font-size: 28px;
             text-shadow: 0 0 10px #ff0000;
             margin-bottom: 10px;
+            font-weight: 900;
+            letter-spacing: 2px;
         }
 
         #ui p {
             color: #fff;
             font-size: 18px;
             margin: 5px 0;
+            font-weight: 400;
         }
 
         #score, #timer, #level {
             color: #ffd93d;
-            font-weight: bold;
+            font-weight: 900;
             font-size: 24px;
         }
 
@@ -84,10 +88,12 @@
             margin: 5px;
             border-radius: 10px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(255,107,107,0.4);
             transition: all 0.3s;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
         }
 
         button:hover {
@@ -116,9 +122,11 @@
         #start-screen h1 {
             font-size: 64px;
             color: #ff6b6b;
-            text-shadow: 0 0 20px #ff0000;
+            text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000;
             margin-bottom: 20px;
             animation: pulse 2s infinite;
+            font-weight: 900;
+            letter-spacing: 4px;
         }
 
         @keyframes pulse {
@@ -133,6 +141,7 @@
             text-align: center;
             margin: 10px 20px;
             line-height: 1.6;
+            font-weight: 400;
         }
 
         .difficulty-buttons {
@@ -167,13 +176,14 @@
             bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.9);
             color: #ffd93d;
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
             white-space: nowrap;
+            letter-spacing: 1px;
         }
 
         .hit-reaction {
@@ -208,11 +218,12 @@
             position: absolute;
             color: #ff6b6b;
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 900;
             text-shadow: 0 0 10px #ff0000;
             animation: splashAnim 1s ease-out;
             pointer-events: none;
             z-index: 600;
+            letter-spacing: 2px;
         }
 
         @keyframes splashAnim {
@@ -225,6 +236,8 @@
             color: #ff6b6b;
             text-shadow: 0 0 20px #ff0000;
             margin-bottom: 20px;
+            font-weight: 900;
+            letter-spacing: 3px;
         }
 
         #final-score {
@@ -232,6 +245,7 @@
             color: #ffd93d;
             text-shadow: 0 0 30px #ffd93d;
             margin: 20px 0;
+            font-weight: 900;
         }
 
         .hidden {
@@ -298,11 +312,11 @@
         ];
 
         const finalMessages = [
-            { min: 0, max: 50, text: '😴 Tu tires comme un pied ! Retourne à la maternelle !' },
-            { min: 50, max: 150, text: '😐 Pas mal... pour un débutant. Mais tu peux mieux faire !' },
-            { min: 150, max: 300, text: '😎 Pas mal du tout ! Tes potes ont morflé !' },
-            { min: 300, max: 500, text: '🔥 EXCELLENT ! T'es une machine de guerre !' },
-            { min: 500, max: 999999, text: '👑 LÉGENDAIRE ! T'es le roi du massacre ! Tes potes vont te détester ! 😂' }
+            { min: 0, max: 49, text: "😴 Tu tires comme un pied ! Retourne à la maternelle !" },
+            { min: 50, max: 149, text: "😐 Pas mal... pour un débutant. Mais tu peux mieux faire !" },
+            { min: 150, max: 299, text: "😎 Pas mal du tout ! Tes potes ont morflé !" },
+            { min: 300, max: 499, text: "🔥 EXCELLENT ! Tu es une machine de guerre !" },
+            { min: 500, max: 999999, text: "👑 LÉGENDAIRE ! Tu es le roi du massacre ! Tes potes vont te détester ! 😂" }
         ];
 
         let score = 0;
@@ -328,34 +342,39 @@
 
         // Sons (synthétiques car pas de fichiers audio)
         function playSound(type) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
 
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
 
-            if (type === 'hit') {
-                oscillator.frequency.value = 200;
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } else if (type === 'throw') {
-                oscillator.frequency.value = 400;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.3);
-            } else if (type === 'gameOver') {
-                oscillator.frequency.value = 100;
-                oscillator.type = 'sawtooth';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 1);
+                if (type === 'hit') {
+                    oscillator.frequency.value = 200;
+                    oscillator.type = 'square';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                } else if (type === 'throw') {
+                    oscillator.frequency.value = 400;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } else if (type === 'gameOver') {
+                    oscillator.frequency.value = 100;
+                    oscillator.type = 'sawtooth';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 1);
+                }
+            } catch (e) {
+                // Silently fail if audio context is not supported
+                console.log('Audio not supported');
             }
         }
 
@@ -558,13 +577,10 @@
             targets = [];
 
             // Message final
-            const finalMessages = [
-  { min: 0, max: 49, text: "😴 Tu tires comme un pied ! Retourne à la maternelle !" },
-  { min: 50, max: 149, text: "😐 Pas mal... pour un débutant. Mais tu peux mieux faire !" },
-  { min: 150, max: 299, text: "😎 Pas mal du tout ! Tes potes ont morflé !" },
-  { min: 300, max: 499, text: "🔥 EXCELLENT ! T'es une machine de guerre !" },
-  { min: 500, max: 999999, text: "👑 LÉGENDAIRE ! T'es le roi du massacre ! Tes potes vont te détester !" }
-];
+            const finalMsg = finalMessages.find(m => score >= m.min && score <= m.max) || finalMessages[0];
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-message').textContent = finalMsg.text;
+            document.getElementById('game-over-screen').classList.remove('hidden');
         }
 
         // Clic dans le vide (raté)
