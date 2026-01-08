@@ -1,1187 +1,294 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Malo's Revenge</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg0:#070A12;
-      --bg1:#0B1020;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.10);
-      --stroke: rgba(255,255,255,.12);
-      --hot:#FF3D7F;
-      --hot2:#FFB000;
-      --cyan:#46E3FF;
-      --lime:#7CFF6B;
-      --text:#EAF0FF;
-      --muted: rgba(234,240,255,.72);
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --shadow2: 0 10px 24px rgba(0,0,0,.35);
-      --radius: 18px;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Malo's Revenge — Game of the Year Edition</title>
 
-    *{ box-sizing:border-box; margin:0; padding:0; }
-    html,body{ height:100%; }
-    body{
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(1200px 700px at 20% 10%, rgba(70,227,255,.18), transparent 60%),
-        radial-gradient(900px 600px at 80% 20%, rgba(255,61,127,.16), transparent 55%),
-        radial-gradient(900px 700px at 50% 90%, rgba(255,176,0,.12), transparent 60%),
-        linear-gradient(180deg, var(--bg0), var(--bg1));
-      color: var(--text);
-      overflow:hidden;
-      cursor:none;
-    }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
-      mix-blend-mode:overlay;
-      opacity:.35;
-      pointer-events:none;
-    }
+<style>
+/* ====== GLOBAL ====== */
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Orbitron',sans-serif;
+  background:#000;
+  color:#fff;
+  overflow:hidden;
+  cursor:crosshair;
+  user-select:none;
+}
 
-    #game{
-      position:relative;
-      width:100vw;
-      height:100vh;
-      user-select:none;
-    }
+/* ===== BACKGROUND ===== */
+#bg-canvas{position:fixed;inset:0;z-index:-2}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:-1}
 
-    /* Custom cursor */
-    #cursor{
-      position:fixed;
-      left:0; top:0;
-      width:64px; height:64px;
-      transform:translate(-50%,-50%);
-      pointer-events:none;
-      z-index:99999;
-      filter: drop-shadow(0 0 18px rgba(255,61,127,.65)) drop-shadow(0 0 26px rgba(70,227,255,.35));
-    }
-    #cursor .icon{
-      width:64px; height:64px;
-      display:grid;
-      place-items:center;
-      font-size:44px;
-      transform: rotate(-12deg);
-    }
-    #cursor .ring{
-      position:absolute; inset:0;
-      border-radius:999px;
-      border:2px solid rgba(234,240,255,.22);
-      box-shadow: inset 0 0 0 2px rgba(255,61,127,.08);
-      opacity:.9;
-    }
-    #cursor .dot{
-      position:absolute;
-      width:8px; height:8px;
-      border-radius:999px;
-      left:50%; top:50%;
-      transform:translate(-50%,-50%);
-      background: linear-gradient(135deg, var(--hot), var(--cyan));
-      box-shadow: 0 0 18px rgba(255,61,127,.8);
-    }
+/* ===== UI ===== */
+#start-screen,#end-screen{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(150,0,150,.35),rgba(0,0,0,.9));
+  backdrop-filter:blur(10px);
+  z-index:20;
+}
+#end-screen{display:none}
 
-    /* HUD */
-    .hud{
-      position:fixed;
-      left:18px; top:18px;
-      display:flex;
-      gap:12px;
-      z-index:5000;
-      align-items:stretch;
-    }
-    .brand{
-      background: linear-gradient(135deg, rgba(255,61,127,.16), rgba(70,227,255,.10));
-      border:1px solid var(--stroke);
-      border-radius: var(--radius);
-      padding:14px 16px;
-      box-shadow: var(--shadow2);
-      min-width: 280px;
-      backdrop-filter: blur(10px);
-    }
-    .brand .title{
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight:900;
-      letter-spacing: .08em;
-      text-transform:uppercase;
-      font-size: 16px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .pill{
-      font-size:12px;
-      padding:5px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      color: var(--muted);
-    }
-    .metrics{
-      display:flex;
-      gap:12px;
-      margin-top:10px;
-    }
-    .metric{
-      flex:1;
-      background: rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 14px;
-      padding:10px 12px;
-    }
-    .metric .k{
-      font-size:11px;
-      color: var(--muted);
-      letter-spacing:.08em;
-      text-transform:uppercase;
-    }
-    .metric .v{
-      margin-top:6px;
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight:900;
-      font-size:22px;
-      letter-spacing:.02em;
-      color: #FFF;
-      text-shadow: 0 0 18px rgba(255,61,127,.25);
-    }
+h1{
+  font-family:'Creepster',cursive;
+  font-size:clamp(3rem,8vw,6rem);
+  color:#ff0066;
+  text-shadow:0 0 30px #ff0066,4px 4px #000;
+}
+.subtitle{
+  margin:10px 0 40px;
+  letter-spacing:.2em;
+  color:#ffcc00;
+}
 
-    .controls{
-      background: rgba(255,255,255,.06);
-      border:1px solid var(--stroke);
-      border-radius: var(--radius);
-      padding:12px;
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      min-width: 220px;
-    }
+.diff-container{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.diff-btn{
+  padding:18px 34px;
+  font-weight:900;
+  border-radius:14px;
+  border:3px solid;
+  cursor:pointer;
+  font-size:1.1rem;
+  transition:.25s;
+}
+.diff-btn:hover{transform:scale(1.08)}
+.easy{background:#00ff88;border-color:#00ff88;color:#003322}
+.medium{background:#ffaa00;border-color:#ffaa00}
+.hard{background:#ff0066;border-color:#ff0066}
+.insane{background:#9900ff;border-color:#9900ff;animation:pulse 1.2s infinite}
 
-    .btn{
-      appearance:none;
-      border:none;
-      border-radius: 14px;
-      padding:11px 12px;
-      font-weight:800;
-      letter-spacing:.04em;
-      text-transform:uppercase;
-      color:#081018;
-      cursor:pointer;
-      background: linear-gradient(135deg, var(--hot), var(--hot2));
-      box-shadow: 0 10px 25px rgba(255,61,127,.25);
-      transition: transform .12s ease, filter .12s ease;
-      font-family: Orbitron, Inter, sans-serif;
-      font-size: 12px;
-    }
-    .btn:hover{ transform: translateY(-1px); filter: brightness(1.05); }
-    .btn:active{ transform: translateY(0px) scale(.99); }
-    .btn.secondary{
-      background: linear-gradient(135deg, rgba(70,227,255,.95), rgba(124,255,107,.95));
-      box-shadow: 0 10px 25px rgba(70,227,255,.18);
-    }
-    .btn.ghost{
-      background: rgba(0,0,0,.25);
-      color: var(--text);
-      border: 1px solid rgba(255,255,255,.14);
-      box-shadow:none;
-    }
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 20px #9900ff}
+  50%{box-shadow:0 0 50px #ff00ff}
+}
 
-    .hint{
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      padding: 6px 2px 0 2px;
-    }
-    .hint kbd{
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.22);
-      color: var(--text);
-    }
+/* ===== HUD ===== */
+#hud{
+  position:absolute;top:15px;left:15px;right:15px;
+  display:none;justify-content:space-between;
+  z-index:10;
+}
+.hud-box{
+  background:rgba(0,0,0,.6);
+  border:2px solid rgba(255,255,255,.2);
+  padding:10px 18px;
+  border-radius:12px;
+}
+.hud-box span{font-size:1.6rem;font-weight:900}
 
-    /* Start / Modal */
-    .overlay{
-      position:fixed; inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: rgba(0,0,0,.72);
-      z-index:9000;
-      padding: 18px;
-    }
-    .panel{
-      width: min(900px, 96vw);
-      border-radius: 26px;
-      border: 1px solid rgba(255,255,255,.16);
-      background:
-        radial-gradient(1200px 800px at 20% 10%, rgba(255,61,127,.18), transparent 55%),
-        radial-gradient(800px 600px at 80% 15%, rgba(70,227,255,.16), transparent 55%),
-        rgba(255,255,255,.06);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(14px);
-      overflow:hidden;
-    }
-    .panel .top{
-      padding: 22px 22px 18px 22px;
-      display:flex;
-      gap: 14px;
-      align-items:flex-start;
-      justify-content:space-between;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-    }
-    .panel h1{
-      font-family: Orbitron, Inter, sans-serif;
-      font-size: clamp(32px, 5vw, 58px);
-      font-weight: 900;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      line-height: 1.05;
-      margin-top: 4px;
-      text-shadow: 0 0 28px rgba(255,61,127,.25);
-    }
-    .panel .sub{
-      margin-top: 12px;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.6;
-      max-width: 58ch;
-    }
+/* ===== CANVAS ===== */
+#game-canvas{display:none}
 
-    .panel .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      padding: 18px 22px 22px 22px;
-    }
-    @media (max-width: 820px){
-      .panel .grid{ grid-template-columns: 1fr; }
-      .controls{ min-width: unset; }
-      body{ cursor:auto; }
-    }
+/* ===== FX ===== */
+.finger{
+  position:absolute;font-size:5rem;
+  transform:translate(-50%,-50%);
+  animation:finger .7s cubic-bezier(.2,1.4,.2,1) forwards;
+  z-index:1000;
+  filter:drop-shadow(0 0 25px hotpink);
+}
+@keyframes finger{
+  0%{scale:.2;opacity:0}
+  40%{scale:1.6;opacity:1}
+  100%{scale:1;opacity:0}
+}
+.screen-shake{animation:shake .25s}
+@keyframes shake{
+  0%{transform:translate(0)}
+  25%{transform:translate(-8px,6px)}
+  50%{transform:translate(8px,-6px)}
+  75%{transform:translate(-6px,-4px)}
+  100%{transform:translate(0)}
+}
+.toast{
+  position:fixed;top:20px;left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.85);
+  border:2px solid hotpink;
+  padding:12px 22px;
+  border-radius:16px;
+  font-weight:800;
+  z-index:2000;
+}
 
-    .card{
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      padding: 16px;
-    }
-    .card h3{
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight: 900;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      font-size: 13px;
-      color: rgba(234,240,255,.88);
-      margin-bottom: 10px;
-    }
-    .rules{
-      color: rgba(234,240,255,.80);
-      font-size: 14px;
-      line-height: 1.65;
-    }
-    .rules ul{ margin-left: 18px; margin-top: 8px; }
-    .rules li{ margin: 6px 0; }
-
-    .diffs{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-    @media (max-width: 520px){
-      .diffs{ grid-template-columns: 1fr; }
-    }
-    .diff{
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      padding: 14px;
-      cursor:pointer;
-      transition: transform .12s ease, border-color .12s ease, filter .12s ease;
-    }
-    .diff:hover{ transform: translateY(-2px); filter: brightness(1.05); border-color: rgba(255,255,255,.22); }
-    .diff .t{
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight: 900;
-      letter-spacing:.08em;
-      text-transform: uppercase;
-      font-size: 12px;
-      color: rgba(234,240,255,.92);
-      display:flex; gap:8px; align-items:center;
-    }
-    .diff .d{ margin-top: 8px; font-size: 12px; color: rgba(234,240,255,.72); line-height:1.5; }
-
-    /* Faces preview on homepage */
-    .faces{
-      display:flex;
-      gap:12px;
-      margin-top:16px;
-      flex-wrap:wrap;
-    }
-    .face{
-      width:80px; height:80px;
-      border-radius:999px;
-      border:3px solid rgba(255,255,255,.18);
-      overflow:hidden;
-      box-shadow: 0 10px 22px rgba(0,0,0,.35);
-      background: rgba(0,0,0,.25);
-    }
-    .face img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-    }
-
-    /* Targets */
-    .target{
-      position:absolute;
-      width: 120px; height: 120px;
-      transform: translate(-50%, -50%);
-      will-change: transform, left, top;
-      filter: drop-shadow(0 18px 30px rgba(0,0,0,.55));
-      cursor:pointer;
-    }
-    .target .frame{
-      width:100%; height:100%;
-      border-radius: 999px;
-      padding: 4px;
-      background: conic-gradient(from 180deg, rgba(255,61,127,1), rgba(70,227,255,1), rgba(255,176,0,1), rgba(255,61,127,1));
-      animation: spin 2.2s linear infinite;
-    }
-    .target .inner{
-      width:100%; height:100%;
-      border-radius:999px;
-      overflow:hidden;
-      background: rgba(0,0,0,.35);
-      border: 2px solid rgba(255,255,255,.18);
-      position:relative;
-    }
-    .target img{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-      transform: scale(1.03);
-      filter: saturate(1.05) contrast(1.05);
-    }
-    .target .name{
-      position:absolute;
-      left:50%; bottom:-30px;
-      transform: translateX(-50%);
-      font-family: Orbitron, Inter, sans-serif;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.35);
-      color: rgba(234,240,255,.92);
-      white-space:nowrap;
-      box-shadow: 0 10px 22px rgba(0,0,0,.28);
-      backdrop-filter: blur(8px);
-    }
-    .target .hp{
-      position:absolute;
-      left:50%; top:-14px;
-      transform: translateX(-50%);
-      width: 82px;
-      height: 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.35);
-      overflow:hidden;
-    }
-    .target .hp > i{
-      display:block;
-      height:100%;
-      width: 100%;
-      background: linear-gradient(90deg, var(--lime), var(--hot2), var(--hot));
-      border-radius: 999px;
-      box-shadow: 0 0 18px rgba(124,255,107,.25);
-    }
-
-    @keyframes spin{
-      from{ transform: rotate(0deg); }
-      to{ transform: rotate(360deg); }
-    }
-
-    /* FX */
-    .bottle{
-      position:absolute;
-      left:0; top:0;
-      transform: translate(-50%,-50%);
-      pointer-events:none;
-      z-index: 6000;
-      font-size: 34px;
-      filter: drop-shadow(0 10px 16px rgba(0,0,0,.5));
-      animation: bottle 560ms cubic-bezier(.2,.8,.2,1) forwards;
-      will-change: transform, left, top;
-    }
-    @keyframes bottle{
-      0%{ opacity:1; transform: translate(-50%,-50%) rotate(0deg) scale(.9); }
-      100%{ opacity:0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(780deg) scale(1.15); }
-    }
-
-    .pop{
-      position:absolute;
-      left:0; top:0;
-      transform: translate(-50%,-50%);
-      pointer-events:none;
-      z-index: 6500;
-      animation: pop 1600ms ease-out forwards;
-      text-align:center;
-      width: 360px;
-    }
-    .pop .msg{
-      display:inline-block;
-      padding: 12px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.20);
-      background: rgba(0,0,0,.65);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 18px 40px rgba(0,0,0,.50);
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight: 900;
-      letter-spacing:.06em;
-      text-transform: uppercase;
-      color: #fff;
-      text-shadow: 0 0 14px rgba(255,61,127,.25);
-      line-height: 1.3;
-      font-size: 15px;
-    }
-    .pop .sub{
-      display:block;
-      margin-top: 8px;
-      font-family: Inter, sans-serif;
-      font-weight: 700;
-      letter-spacing:.02em;
-      text-transform:none;
-      color: rgba(234,240,255,.88);
-      font-size: 14px;
-    }
-    @keyframes pop{
-      0%{ opacity:0; transform: translate(-50%,-50%) translateY(8px) scale(.92); }
-      15%{ opacity:1; transform: translate(-50%,-50%) translateY(0px) scale(1); }
-      85%{ opacity:1; transform: translate(-50%,-50%) translateY(-20px) scale(1); }
-      100%{ opacity:0; transform: translate(-50%,-50%) translateY(-90px) scale(1.05); }
-    }
-
-    /* DOIGT D'HONNEUR SPECTACULAIRE */
-    .finger{
-      position:absolute;
-      left:0; top:0;
-      transform: translate(-50%,-50%);
-      pointer-events:none;
-      z-index: 7000;
-      font-size: 140px;
-      filter: 
-        drop-shadow(0 0 35px rgba(255,61,127,.95))
-        drop-shadow(0 0 55px rgba(255,176,0,.85))
-        drop-shadow(0 0 75px rgba(70,227,255,.75));
-      animation: fingerSpectacular 900ms cubic-bezier(.2,.9,.2,1) forwards;
-    }
-    @keyframes fingerSpectacular{
-      0%{ 
-        opacity:0; 
-        transform: translate(-50%,-50%) scale(.15) rotate(-45deg); 
-      }
-      15%{ 
-        opacity:1; 
-        transform: translate(-50%,-50%) scale(1.35) rotate(12deg); 
-      }
-      30%{
-        transform: translate(-50%,-50%) scale(1.15) rotate(-8deg);
-      }
-      45%{
-        transform: translate(-50%,-50%) scale(1.25) rotate(5deg);
-      }
-      100%{ 
-        opacity:0; 
-        transform: translate(-50%,-50%) scale(1.55) rotate(28deg) translateY(-40px); 
-      }
-    }
-
-    /* Game over */
-    .over{
-      position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.78);
-      z-index: 9500;
-      padding: 18px;
-    }
-    .over .panel{ width: min(720px, 96vw); }
-    .scoreBig{
-      font-family: Orbitron, Inter, sans-serif;
-      font-weight: 900;
-      letter-spacing:.08em;
-      font-size: clamp(42px, 8vw, 86px);
-      color: #fff;
-      text-shadow: 0 0 28px rgba(255,176,0,.25);
-      margin-top: 10px;
-    }
-
-    /* Toast */
-    #toast{
-      position:fixed;
-      left:50%; bottom: 22px;
-      transform: translateX(-50%);
-      z-index: 8000;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(0,0,0,.40);
-      color: rgba(234,240,255,.92);
-      backdrop-filter: blur(10px);
-      font-weight: 800;
-      letter-spacing: .02em;
-      opacity:0;
-      transition: opacity .2s ease, transform .2s ease;
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
-      max-width: min(760px, 92vw);
-      text-align:center;
-    }
-    #toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
-
-    .sr{
-      position:absolute;
-      width:1px; height:1px;
-      padding:0; margin:-1px;
-      overflow:hidden;
-      clip:rect(0,0,0,0);
-      border:0;
-    }
-  </style>
+/* ===== END ===== */
+#restart{
+  margin-top:30px;
+  padding:16px 40px;
+  font-size:1.2rem;
+  font-weight:900;
+  border-radius:14px;
+  border:3px solid #ff0066;
+  background:#ff0066;
+  cursor:pointer;
+}
+</style>
 </head>
+
 <body>
-  <div id="cursor" aria-hidden="true">
-    <div class="ring"></div>
-    <div class="dot"></div>
-    <div class="icon">🍷</div>
+<canvas id="bg-canvas"></canvas>
+<div id="particles"></div>
+
+<div id="start-screen">
+  <h1>MALO'S REVENGE</h1>
+  <div class="subtitle">CIRCUS MASSACRE EDITION</div>
+  <div class="diff-container">
+    <button class="diff-btn easy" onclick="startGame('easy')">EASY</button>
+    <button class="diff-btn medium" onclick="startGame('medium')">MEDIUM</button>
+    <button class="diff-btn hard" onclick="startGame('hard')">HARD</button>
+    <button class="diff-btn insane" onclick="startGame('insane')">INSANE</button>
   </div>
-
-  <div class="hud" aria-hidden="false">
-    <div class="brand">
-      <div class="title">🎪 Malo's Revenge <span class="pill" id="pillLevel">—</span></div>
-      <div class="metrics">
-        <div class="metric"><div class="k">Score</div><div class="v" id="score">0</div></div>
-        <div class="metric"><div class="k">Temps</div><div class="v"><span id="time">60</span>s</div></div>
-        <div class="metric"><div class="k">Combo</div><div class="v" id="combo">x1</div></div>
-      </div>
-    </div>
-
-    <div class="controls">
-      <button class="btn" id="btnPause" onclick="togglePause()">⏸ Pause</button>
-      <button class="btn secondary" onclick="restart()">🔁 Restart</button>
-      <button class="btn ghost" onclick="toggleSound()">🔊 Son : <span id="soundState">ON</span></button>
-      <button class="btn ghost" onclick="toggleMusic()">🎵 Musique : <span id="musicState">ON</span></button>
-      <div class="hint">Clique pour tirer. <kbd>Espace</kbd> pause. <kbd>M</kbd> mute.</div>
-    </div>
-  </div>
-
-  <div id="game"></div>
-  <div id="toast" role="status" aria-live="polite"></div>
-
-  <!-- START -->
-  <div class="overlay" id="start">
-    <div class="panel">
-      <div class="top">
-        <div>
-          <h1>🎪 MALO'S REVENGE</h1>
-          <div class="sub">
-            Balance des bouteilles de vin sur les têtes qui se baladent. Plus tu touches, plus tu déclenches le <b>doigt d'honneur</b> et les bruitages.
-          </div>
-          <div class="faces">
-            <div class="face"><img src="malo.jpg" alt="Malo" onerror="this.parentNode.style.display='none'" /></div>
-            <div class="face"><img src="marie.jpg" alt="Marie" onerror="this.parentNode.style.display='none'" /></div>
-            <div class="face"><img src="nico.jpg" alt="PtitNico" onerror="this.parentNode.style.display='none'" /></div>
-            <div class="face"><img src="valentine.jpg" alt="Valentine" onerror="this.parentNode.style.display='none'" /></div>
-          </div>
-        </div>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3>Règles</h3>
-          <div class="rules">
-            <ul>
-              <li>Tu as <b>60 secondes</b> pour faire le meilleur score.</li>
-              <li>Chaque cible a <b>3 PV</b>. Au dernier coup : <b>💥</b> + bonus.</li>
-              <li>Les réactions et punchlines dépendent de la personne.</li>
-              <li>Enchaîne les touches pour monter le <b>combo</b> (et le chaos).</li>
-            </ul>
-          </div>
-          <div class="diffs">
-            <div class="diff" onclick="startGame('easy')">
-              <div class="t">🙂 Facile</div>
-              <div class="d">Grosses têtes, vitesse cool. Parfait pour chauffer.</div>
-            </div>
-            <div class="diff" onclick="startGame('medium')">
-              <div class="t">😈 Moyen</div>
-              <div class="d">Rapide, nerveux. Le vrai jeu.</div>
-            </div>
-            <div class="diff" onclick="startGame('hard')">
-              <div class="t">💀 Difficile</div>
-              <div class="d">Speedrun du dérapage. Bonne chance.</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <h3>Conseil</h3>
-          <div class="rules">
-            Clique <b>sur la tête</b>, pas sur le nom.
-            Si tu n'entends rien, clique une fois (les navigateurs bloquent l'audio avant interaction).
-            <br><br>
-            <b>Astuce :</b> vise les rebonds près des bords, ça fait du carton.
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- GAME OVER -->
-  <div class="over" id="over" style="display:none;">
-    <div class="panel">
-      <div class="top">
-        <div>
-          <h1>GAME OVER</h1>
-          <div class="sub" id="finalLine">—</div>
-          <div class="scoreBig" id="finalScore">0</div>
-        </div>
-      </div>
-      <div class="grid" style="grid-template-columns: 1fr;">
-        <div class="card" style="display:flex; gap:10px; justify-content:flex-end;">
-          <button class="btn secondary" onclick="restart()">🔁 Rejouer</button>
-          <button class="btn ghost" onclick="closeOver()">OK</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ============ CONFIG ============
-    const FRIENDS = [
-      { id: 'malo',      name: 'Malo',      img: 'malo.jpg' },
-      { id: 'marie',     name: 'Marie',     img: 'marie.jpg' },
-      { id: 'ptitnico',  name: 'PtitNico',  img: 'nico.jpg' },
-      { id: 'valentine', name: 'Valentine', img: 'valentine.jpg' }
-    ];
-
-    const DIFF = {
-      easy:   { label:'🙂 Facile',   spawn: 1100, speed: 1.9, size: 134 },
-      medium: { label:'😈 Moyen',    spawn: 820,  speed: 2.6, size: 116 },
-      hard:   { label:'💀 Difficile',spawn: 640,  speed: 3.4, size: 102 },
-    };
-
-    const LINES = {
-      malo: [
-        "C'est qui ça ?",
-        "On t'a déjà vu quelque part ?",
-        "On va faire comme si rien ne s'était passé.",
-        "T'es perdu frérot ?",
-        "La vie est injuste!",
-      ],
-      marie: [
-        "Je vais te gifler !",
-        "PAS d'accord.",
-        "Oups... ça part en drame.",
-        "T'as un problème ?",
-        "On va en reparler.",
-      ],
-      ptitnico: [
-        "Rastafarai !",
-        "On dirait un problème.",
-        "Mauvaise énergie ",
-        "Merci d'avoir tenté.",
-        "Tu t'acharnes ?",
-      ],
-      valentine: [
-        "Elle coûte cher !",
-        "T'as vraiment cru que c'était une bonne idée ?",
-        "C'était hors budget, désolé.",
-        "Tout le monde n'a pas le niveau.",
-        "Tu peux pas te le permettre.",
-      ],
-      generic: [
-        "DANS TA FACE !",
-        "BOUM !",
-        "AIE !",
-        "TROP FACILE !",
-        "C'EST TERMINÉ !",
-      ]
-    };
-
-    const ENDINGS = [
-      { min: 0,   max: 99,  text: "Tu tires comme un pied. Reprends un verre et recommence." },
-      { min: 100, max: 249, text: "Pas mal. Mais là c'est encore soft." },
-      { min: 250, max: 399, text: "Solide. On commence à te craindre." },
-      { min: 400, max: 649, text: "Très chaud. Le cirque ferme à cause de toi." },
-      { min: 650, max: 999999, text: "Légendaire. T'es officiellement le sommelier du chaos." },
-    ];
-
-    // ============ STATE ============
-    const gameEl = document.getElementById('game');
-    const startEl = document.getElementById('start');
-    const overEl  = document.getElementById('over');
-    const toastEl = document.getElementById('toast');
-
-    const scoreEl = document.getElementById('score');
-    const timeEl  = document.getElementById('time');
-    const comboEl = document.getElementById('combo');
-    const levelPill = document.getElementById('pillLevel');
-
-    let running = false;
-    let paused  = false;
-    let soundOn = true;
-    let musicOn = true;
-
-    let diffKey = 'medium';
-    let score = 0;
-    let timeLeft = 60;
-
-    let spawnTimer = null;
-    let tickTimer = null;
-
-    let targets = [];
-
-    let combo = 1;
-    let comboTimer = null;
-
-    // ============ AUDIO (WebAudio) ============
-    let AC = null;
-    function audio(){
-      if (!soundOn) return null;
-      if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-      return AC;
-    }
-
-    // BRUITAGES TRASH & RIGOLOS
-    function beep(type='hit'){
-      const ctx = audio();
-      if (!ctx) return;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-
-      const t0 = ctx.currentTime;
-
-      if (type === 'throw'){
-        // Son de lancer de bouteille (whoosh)
-        o.type = 'sine';
-        o.frequency.setValueAtTime(680, t0);
-        o.frequency.exponentialRampToValueAtTime(180, t0 + 0.14);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
-        o.start(t0);
-        o.stop(t0 + 0.18);
-        return;
-      }
-
-      if (type === 'hit'){
-        // Son de coup (BONK trash)
-        o.type = 'square';
-        o.frequency.setValueAtTime(240, t0);
-        o.frequency.exponentialRampToValueAtTime(80, t0 + 0.18);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.38, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
-        o.start(t0);
-        o.stop(t0 + 0.24);
-        return;
-      }
-
-      if (type === 'finger'){
-        // Son de doigt d'honneur (BOING rigolo)
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(320, t0);
-        o.frequency.exponentialRampToValueAtTime(880, t0 + 0.06);
-        o.frequency.exponentialRampToValueAtTime(420, t0 + 0.12);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
-        o.start(t0);
-        o.stop(t0 + 0.20);
-        return;
-      }
-
-      if (type === 'boom'){
-        // Explosion (BOOM trash)
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(180, t0);
-        o.frequency.exponentialRampToValueAtTime(40, t0 + 0.35);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.45, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.40);
-        o.start(t0);
-        o.stop(t0 + 0.42);
-      }
-    }
-
-    // ============ MUSIQUE DE FOND ============
-    let musicOsc = null;
-    let musicGain = null;
-    let musicInterval = null;
-
-    function startMusic(){
-      if (!musicOn) return;
-      const ctx = audio();
-      if (!ctx) return;
-
-      // Mélodie simple et rigolote (circus-like)
-      const melody = [
-        { freq: 523.25, dur: 0.2 }, // C5
-        { freq: 587.33, dur: 0.2 }, // D5
-        { freq: 659.25, dur: 0.2 }, // E5
-        { freq: 698.46, dur: 0.2 }, // F5
-        { freq: 783.99, dur: 0.3 }, // G5
-        { freq: 698.46, dur: 0.2 }, // F5
-        { freq: 659.25, dur: 0.2 }, // E5
-        { freq: 587.33, dur: 0.3 }, // D5
-      ];
-
-      let idx = 0;
-      musicInterval = setInterval(()=>{
-        if (!musicOn || !running || paused) return;
-        const note = melody[idx % melody.length];
-        playNote(note.freq, note.dur);
-        idx++;
-      }, 250);
-    }
-
-    function playNote(freq, dur){
-      const ctx = audio();
-      if (!ctx) return;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g);
-      g.connect(ctx.destination);
-
-      o.type = 'triangle';
-      o.frequency.value = freq;
-
-      const t0 = ctx.currentTime;
-      g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(0.08, t0 + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-      o.start(t0);
-      o.stop(t0 + dur + 0.01);
-    }
-
-    function stopMusic(){
-      if (musicInterval){
-        clearInterval(musicInterval);
-        musicInterval = null;
-      }
-    }
-
-    // Cursor
-    const cursor = document.getElementById('cursor');
-    document.addEventListener('mousemove', (e)=>{
-      cursor.style.left = e.clientX + 'px';
-      cursor.style.top  = e.clientY + 'px';
-    });
-
-    // Keyboard
-    document.addEventListener('keydown', (e)=>{
-      if (e.code === 'Space'){
-        e.preventDefault();
-        if (running) togglePause();
-      }
-      if (e.key.toLowerCase() === 'm'){
-        toggleSound();
-      }
-    });
-
-    function toast(text){
-      toastEl.textContent = text;
-      toastEl.classList.add('show');
-      clearTimeout(toastEl._t);
-      toastEl._t = setTimeout(()=>toastEl.classList.remove('show'), 1200);
-    }
-
-    function rand(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-
-    function startGame(key){
-      diffKey = key;
-      levelPill.textContent = DIFF[diffKey].label;
-      startEl.style.display = 'none';
-      overEl.style.display = 'none';
-
-      clearAll();
-      score = 0;
-      timeLeft = 60;
-      combo = 1;
-      paused = false;
-      running = true;
-      renderHUD();
-
-      toast('Clique pour tirer. Fais du bruit.');
-
-      startMusic();
-
-      tickTimer = setInterval(()=>{
-        if (!running || paused) return;
-        timeLeft--;
-        renderHUD();
-        if (timeLeft <= 0) endGame();
-      }, 1000);
-
-      spawnTimer = setInterval(()=>{
-        if (!running || paused) return;
-        spawnTarget();
-      }, DIFF[diffKey].spawn);
-
-      for (let i=0;i<2;i++) spawnTarget();
-    }
-
-    function renderHUD(){
-      scoreEl.textContent = score;
-      timeEl.textContent = timeLeft;
-      comboEl.textContent = 'x' + combo;
-    }
-
-    function togglePause(){
-      if (!running) return;
-      paused = !paused;
-      document.getElementById('btnPause').textContent = paused ? '▶ Reprendre' : '⏸ Pause';
-      toast(paused ? 'Pause. Respire.' : 'Reprise. Vise bien.');
-    }
-
-    function toggleSound(){
-      soundOn = !soundOn;
-      document.getElementById('soundState').textContent = soundOn ? 'ON' : 'OFF';
-      toast(soundOn ? 'Son ON 🔊' : 'Son OFF 🔇');
-    }
-
-    function toggleMusic(){
-      musicOn = !musicOn;
-      document.getElementById('musicState').textContent = musicOn ? 'ON' : 'OFF';
-      toast(musicOn ? 'Musique ON 🎵' : 'Musique OFF 🎵');
-      if (!musicOn) stopMusic();
-      else if (running && !paused) startMusic();
-    }
-
-    function restart(){
-      location.reload();
-    }
-
-    function closeOver(){
-      overEl.style.display = 'none';
-    }
-
-    function endGame(){
-      running = false;
-      paused = false;
-      clearInterval(spawnTimer);
-      clearInterval(tickTimer);
-      spawnTimer = null;
-      tickTimer = null;
-      stopMusic();
-
-      targets.forEach(t=> t.el.remove());
-      targets = [];
-
-      const ending = ENDINGS.find(e => score >= e.min && score <= e.max) || ENDINGS[0];
-      document.getElementById('finalScore').textContent = score;
-      document.getElementById('finalLine').textContent = ending.text;
-      overEl.style.display = 'flex';
-
-      beep('boom');
-    }
-
-    function clearAll(){
-      clearInterval(spawnTimer);
-      clearInterval(tickTimer);
-      spawnTimer = tickTimer = null;
-      stopMusic();
-      targets.forEach(t=> t.el.remove());
-      targets = [];
-    }
-
-    // ========= Target system =========
-    function spawnTarget(){
-      const friend = rand(FRIENDS);
-      const cfg = DIFF[diffKey];
-      const el = document.createElement('div');
-      el.className = 'target';
-      el.style.width = cfg.size + 'px';
-      el.style.height = cfg.size + 'px';
-
-      const cx = window.innerWidth * (0.5 + (Math.random()-0.5)*0.18);
-      const cy = window.innerHeight * (0.52 + (Math.random()-0.5)*0.22);
-
-      const angle = Math.random() * Math.PI * 2;
-      const vx = Math.cos(angle) * cfg.speed;
-      const vy = Math.sin(angle) * cfg.speed;
-
-      const hpMax = 3;
-
-      el.innerHTML = `
-        <div class="frame">
-          <div class="inner">
-            <div class="hp"><i style="width:100%"></i></div>
-            <img src="${friend.img}" alt="${friend.name}" draggable="false" onerror="this.style.display='none'" />
-          </div>
-        </div>
-        <div class="name">${friend.name}</div>
-      `;
-
-      el.style.left = cx + 'px';
-      el.style.top  = cy + 'px';
-
-      const targetObj = { el, friend, x: cx, y: cy, vx, vy, hp: hpMax, hpMax };
-      targets.push(targetObj);
-      gameEl.appendChild(el);
-
-      el.addEventListener('click', (ev)=>{
-        ev.stopPropagation();
-        hit(targetObj, ev.clientX, ev.clientY);
-      });
-    }
-
-    // Global click => throw bottle (for vibe)
-    gameEl.addEventListener('click', (ev)=>{
-      if (!running || paused) return;
-      throwBottle(ev.clientX, ev.clientY, ev.clientX + (Math.random()-0.5)*120, ev.clientY + 220);
-    });
-
-    function hit(t, mx, my){
-      if (!running || paused) return;
-
-      const rect = t.el.getBoundingClientRect();
-      const tx = rect.left + rect.width/2;
-      const ty = rect.top + rect.height/2;
-      throwBottle(mx, ty, tx, ty);
-
-      t.hp = Math.max(0, t.hp - 1);
-      const hpPct = (t.hp / t.hpMax) * 100;
-      const bar = t.el.querySelector('.hp > i');
-      if (bar) bar.style.width = hpPct + '%';
-
-      score += Math.round(10 * combo);
-      if (t.hp === 0) score += Math.round(15 * combo);
-
-      combo = Math.min(10, combo + 1);
-      clearTimeout(comboTimer);
-      comboTimer = setTimeout(()=>{ combo = 1; renderHUD(); }, 900);
-
-      renderHUD();
-
-      beep('hit');
-      spawnFinger(tx, ty);
-      beep('finger');
-
-      const personLine = rand(LINES[t.friend.id] || []);
-      const genericLine = rand(LINES.generic);
-      const msg = t.hp === 0 ? `💥 ${genericLine}` : `🍷 ${genericLine}`;
-      const sub = personLine ? `"${personLine}"` : '';
-      spawnPop(tx, ty, msg, sub);
-
-      t.vx *= -1;
-      t.vy *= -1;
-
-      if (t.hp === 0){
-        beep('boom');
-        const el = t.el;
-        el.style.transition = 'transform 180ms ease, opacity 180ms ease';
-        el.style.transform += ' scale(0.82)';
-        el.style.opacity = '0.0';
-        setTimeout(()=>{
-          el.remove();
-          targets = targets.filter(x => x !== t);
-        }, 170);
-      }
-    }
-
-    function spawnPop(x,y, line, sub){
-      const el = document.createElement('div');
-      el.className = 'pop';
-      el.style.left = x + 'px';
-      el.style.top  = y + 'px';
-      el.innerHTML = `<div class="msg">${escapeHtml(line)}${sub ? `<span class="sub">${escapeHtml(sub)}</span>` : ''}</div>`;
-      gameEl.appendChild(el);
-      setTimeout(()=>el.remove(), 1620);
-    }
-
-    function spawnFinger(x,y){
-      const el = document.createElement('div');
-      el.className = 'finger';
-      el.style.left = x + 'px';
-      el.style.top  = y + 'px';
-      el.textContent = '🖕';
-      gameEl.appendChild(el);
-      setTimeout(()=>el.remove(), 950);
-    }
-
-    function throwBottle(x0,y0,x1,y1){
-      if (running && !paused) beep('throw');
-
-      const b = document.createElement('div');
-      b.className = 'bottle';
-      b.style.left = x0 + 'px';
-      b.style.top  = y0 + 'px';
-      b.style.setProperty('--dx', (x1 - x0) + 'px');
-      b.style.setProperty('--dy', (y1 - y0) + 'px');
-      b.textContent = '🍷';
-      gameEl.appendChild(b);
-      setTimeout(()=>b.remove(), 600);
-    }
-
-    // Movement loop
-    function step(){
-      requestAnimationFrame(step);
-      if (!running || paused) return;
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const pad = 70;
-
-      for (const t of targets){
-        const size = parseFloat(t.el.style.width) || 110;
-
-        t.x += t.vx;
-        t.y += t.vy;
-
-        const minX = pad;
-        const maxX = w - pad;
-        const minY = pad;
-        const maxY = h - pad;
-
-        if (t.x < minX){ t.x = minX; t.vx *= -1; }
-        if (t.x > maxX){ t.x = maxX; t.vx *= -1; }
-        if (t.y < minY){ t.y = minY; t.vy *= -1; }
-        if (t.y > maxY){ t.y = maxY; t.vy *= -1; }
-
-        t.el.style.left = t.x + 'px';
-        t.el.style.top  = t.y + 'px';
-      }
-    }
-    requestAnimationFrame(step);
-
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-
-    window.addEventListener('resize', ()=>{});
-
-  </script>
+</div>
+
+<div id="hud">
+  <div class="hud-box">Score<br><span id="score">0</span></div>
+  <div class="hud-box">Temps<br><span id="time">60</span></div>
+</div>
+
+<canvas id="game-canvas"></canvas>
+
+<div id="end-screen">
+  <h1>GAME OVER</h1>
+  <div id="final-score"></div>
+  <button id="restart" onclick="location.reload()">REJOUER</button>
+</div>
+
+<script>
+/* ===== CONFIG ===== */
+const friends=[
+ {id:'malo',name:'Malo',img:'malo.jpg'},
+ {id:'marie',name:'Marie',img:'marie.jpg'},
+ {id:'ptitnico',name:'PtitNico',img:'nico.jpg'},
+ {id:'valentine',name:'Valentine',img:'valentine.jpg'}
+];
+
+const hitMessagesByCharacter={
+ malo:[
+  "C'est qui ça ?",
+  "On t'a déjà vu quelque part ?",
+  "On va faire comme si rien ne s'était passé.",
+  "T'es perdu frérot ?",
+  "La vie est injuste!",
+  "Tu t'es trompé de cible champion.",
+  "C'était pas dans le script ça."
+ ],
+ marie:[
+  "Je vais te gifler !",
+  "PAS d'accord.",
+  "Oups... ça part en drame.",
+  "T'as un problème ?",
+  "On va en reparler.",
+  "C'était une très mauvaise idée.",
+  "Vraiment pas malin."
+ ],
+ ptitnico:[
+  "Rastafarai !",
+  "On dirait un problème.",
+  "Bad vibes",
+  "Merci d'avoir tenté.",
+  "Tu t'acharnes ?",
+  "C'était presque bien.",
+  "Fallait pas forcer."
+ ],
+ valentine:[
+  "Elle coûte cher !",
+  "T'as vraiment cru que c'était une bonne idée ?",
+  "C'était hors budget, désolé.",
+  "Tout le monde n'a pas le niveau.",
+  "Tu peux pas te le permettre.",
+  "Erreur de casting.",
+  "C'était ambitieux."
+ ]
+};
+
+const missMessages=[
+ "Raté champion.",
+ "Le cirque c'est toi.",
+ "Même bourré tu ferais mieux.",
+ "T'as cliqué où là ?",
+ "Reprends un verre."
+];
+
+/* ===== GAME ===== */
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=innerWidth;canvas.height=innerHeight;
+
+let targets=[],score=0,time=60,active=false;
+
+/* ===== START ===== */
+function startGame(){
+ document.getElementById('start-screen').style.display='none';
+ document.getElementById('hud').style.display='flex';
+ canvas.style.display='block';
+ active=true;
+ spawn();
+ setInterval(()=>{if(active&&time--<=0)endGame();updateHud()},1000);
+ requestAnimationFrame(loop);
+}
+
+/* ===== TARGET ===== */
+function spawn(){
+ const f=friends[Math.floor(Math.random()*friends.length)];
+ const img=new Image();img.src=f.img;
+ targets.push({f,img,x:Math.random()*(canvas.width-80),y:Math.random()*(canvas.height-80),s:80});
+ setTimeout(spawn,900);
+}
+
+/* ===== LOOP ===== */
+function loop(){
+ if(!active)return;
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ targets.forEach(t=>ctx.drawImage(t.img,t.x,t.y,t.s,t.s));
+ requestAnimationFrame(loop);
+}
+
+/* ===== CLICK ===== */
+canvas.onclick=e=>{
+ let hit=false;
+ targets.forEach((t,i)=>{
+  if(e.offsetX>t.x&&e.offsetX<t.x+t.s&&e.offsetY>t.y&&e.offsetY<t.y+t.s){
+   hit=true;score+=10;
+   showToast(hitMessagesByCharacter[t.f.id]);
+   finger(e.clientX,e.clientY);
+   targets.splice(i,1);
+  }
+ });
+ if(!hit)showToast(missMessages);
+};
+
+/* ===== UI ===== */
+function showToast(arr){
+ const t=document.createElement('div');
+ t.className='toast';
+ t.textContent=arr[Math.floor(Math.random()*arr.length)];
+ document.body.appendChild(t);
+ setTimeout(()=>t.remove(),1200);
+}
+function finger(x,y){
+ const f=document.createElement('div');
+ f.className='finger';f.textContent='🖕';
+ f.style.left=x+'px';f.style.top=y+'px';
+ document.body.appendChild(f);
+ document.body.classList.add('screen-shake');
+ setTimeout(()=>{f.remove();document.body.classList.remove('screen-shake')},700);
+}
+function updateHud(){
+ document.getElementById('score').textContent=score;
+ document.getElementById('time').textContent=time;
+}
+function endGame(){
+ active=false;
+ document.getElementById('end-screen').style.display='flex';
+ document.getElementById('final-score').textContent='Score : '+score;
+}
+</script>
 </body>
 </html>
