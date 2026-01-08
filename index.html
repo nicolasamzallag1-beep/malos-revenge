@@ -351,7 +351,6 @@
     }
 
     
-
     /* Floating wine glasses (préhomepage) */
     .floaters{ position:absolute; inset:0; pointer-events:none; z-index:55; overflow:hidden; }
     .floater{ position:absolute; font-size: 34px; opacity:.28; filter: drop-shadow(0 12px 24px rgba(0,0,0,.35));
@@ -363,7 +362,7 @@
       100%{ transform: translate3d(0, -140px, 0) rotate(360deg) scale(var(--s,1)); opacity:0; }
     }
 
-    /* Mobile adjustments */
+/* Mobile adjustments */
     @media (max-width: 900px){
       .grid{ grid-template-columns: repeat(2, 1fr); }
       #hud{ inset: 14px 14px auto 14px; }
@@ -430,30 +429,35 @@
         <span class="floater" style="left:82%; --dur: 9.5s; --s:1.05; --o:.24; animation-delay:-5s;">🍷</span>
         <span class="floater" style="left:92%; --dur: 12.5s; --s:.85; --o:.18; animation-delay:-9s;">🍷</span>
       </div>
-
-      <h1 class="title">🎪 Malo's Revenge 🎪</h1>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;">
+        <img src="./malo.jpg" alt="Malo" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-2deg);">
+        <img src="./marie.jpg" alt="Marie" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(1deg);">
+        <img src="./nico.jpg" alt="Nico" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-1deg);">
+        <img src="./valentine.jpg" alt="Valentine" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(2deg);">
+      </div>
+      <h1 class="title">MALO'S REVENGE</h1>
+      <div class="badge">🎪 Cirque trash • 🍷 Apéro • 🖕 Vengeance</div>
+      <div class="hint" style="max-width:860px;padding:0 18px;margin-top:2px;">
+        Bienvenue dans le cirque le plus trash de l'histoire. Malo veut sa revanche.<br/>
+        Lance des verres de vin sur tes potes qui défilent. Ils vont pleurer, te faire un doigt d'honneur — et toi tu vas kiffer.
+      </div>
       <div class="panel">
-        <div class="hint" style="font-size:15px;">
-          Bienvenue dans le cirque le plus trash de l'histoire ! <br>
-          Malo en a marre. Il veut sa revanche. <br>
-          Lance des bouteilles de vin sur tes potes qui défilent. <br>
-          Ils vont pleurer, te faire un doigt d'honneur, et toi tu vas kiffer. <br>
-          Choisis ton niveau de difficulté et que le massacre commence ! 🍷💀
+        <div style="display:flex;justify-content:center;margin:10px 0 14px;">
+          <button class="btn" id="enterBtn" style="font-size:18px;padding:12px 32px;">ENTER</button>
         </div>
-        <div style="display:flex;justify-content:center;margin:16px 0 10px;">
-          <button class="btn" id="enterBtn">ENTER</button>
-        </div>
-        <div class="grid" id="diffGrid" style="display:none;">
+        <div id="diffWrap" style="display:none;">
+        <div class="grid">
           <button class="diff" data-diff="easy"><div class="diffName">Easy</div><div class="diffDesc">Cool & smooth<br/>Pour s’échauffer.</div></button>
           <button class="diff" data-diff="medium"><div class="diffName">Medium</div><div class="diffDesc">Ça commence à piquer<br/>mais c’est gérable.</div></button>
           <button class="diff" data-diff="hard"><div class="diffName">Hard</div><div class="diffDesc">Réflexes obligatoires<br/>sinon c’est honteux.</div></button>
           <button class="diff" data-diff="insane"><div class="diffName">Insane</div><div class="diffDesc">Speedrun d’apéro<br/>ça part en orbite.</div></button>
         </div>
-        <div class="hint" id="controlsHint" style="display:none;">
+        <div class="hint">
           Clique pour <b>lancer un verre de vin</b> 🍷 vers une tête.<br/>
           <span class="kbd">P</span> pause • <span class="kbd">R</span> restart • Le son démarre au premier clic.
         </div>
       </div>
+        </div>
     </div>
 
     <div id="end">
@@ -471,10 +475,10 @@
      *  - Ou remplace par des URLs directes (ex: https://i.imgur.com/xxxx.jpg)
      **********************/
     const friends = [
-      { id: "malo",      name: "Malo",      img: "malo.jpg" },
-      { id: "marie",     name: "Marie",     img: "marie.jpg" },
-      { id: "ptitnico",  name: "PtitNico",  img: "nico.jpg" },
-      { id: "valentine", name: "Valentine", img: "valentine.jpg" },
+      { id: "malo",      name: "Malo",      img: "./malo.jpg" },
+      { id: "marie",     name: "Marie",     img: "./marie.jpg" },
+      { id: "ptitnico",  name: "PtitNico",  img: "./nico.jpg" },
+      { id: "valentine", name: "Valentine", img: "./valentine.jpg" },
     ];
 
     const diff = {
@@ -1498,20 +1502,7 @@ canvas.addEventListener("click", async (e) => {
       throwWine(x, y);
     });
 
-    
-
-    // ENTER (préhomepage) => affiche les difficultés
-    const enterBtn = document.getElementById("enterBtn");
-    const diffGrid = document.getElementById("diffGrid");
-    const controlsHint = document.getElementById("controlsHint");
-    if (enterBtn && diffGrid && controlsHint){
-      enterBtn.addEventListener("click", () => {
-        enterBtn.style.display = "none";
-        diffGrid.style.display = "grid";
-        controlsHint.style.display = "block";
-      });
-    }
-document.querySelectorAll(".diff").forEach(btn => {
+    document.querySelectorAll(".diff").forEach(btn => {
       btn.addEventListener("click", () => startGame(btn.dataset.diff));
     });
 
