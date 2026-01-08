@@ -558,10 +558,13 @@
             targets = [];
 
             // Message final
-            const finalMsg = finalMessages.find(m => score >= m.min && score <= m.max);
-            document.getElementById('final-score').textContent = score;
-            document.getElementById('final-message').textContent = finalMsg.text;
-            document.getElementById('game-over-screen').classList.remove('hidden');
+            const finalMessages = [
+  { min: 0, max: 49, text: "😴 Tu tires comme un pied ! Retourne à la maternelle !" },
+  { min: 50, max: 149, text: "😐 Pas mal... pour un débutant. Mais tu peux mieux faire !" },
+  { min: 150, max: 299, text: "😎 Pas mal du tout ! Tes potes ont morflé !" },
+  { min: 300, max: 499, text: "🔥 EXCELLENT ! T'es une machine de guerre !" },
+  { min: 500, max: 999999, text: "👑 LÉGENDAIRE ! T'es le roi du massacre ! Tes potes vont te détester !" }
+];
         }
 
         // Clic dans le vide (raté)
