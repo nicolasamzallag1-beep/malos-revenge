@@ -1,159 +1,418 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Malo's Revenge</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Oxanium:wght@600;800;900&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Malo's Revenge - Circus Massacre</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff003c;
+            --secondary: #00f2ff;
+            --bg: #0a0a0c;
+            --panel: rgba(20, 20, 25, 0.9);
+        }
 
-<style>
-:root{
-  --pink:#ff4fd8; --cyan:#33e6ff; --lime:#44ff9a; --gold:#ffd34f;
-  --bg:#060818; --glass:rgba(255,255,255,.12);
-}
-html,body{margin:0;height:100%;background:radial-gradient(circle at 30% 20%,#1a1f55,#060818 70%);font-family:Oxanium,sans-serif;color:#fff;overflow:hidden;cursor:crosshair}
-#game{position:relative;width:100vw;height:100vh}
-canvas{position:absolute;inset:0}
+        * { box-sizing: border-box; margin: 0; padding: 0; cursor: crosshair; }
 
-/* HUD */
-#hud{position:absolute;top:14px;left:14px;display:flex;gap:10px;z-index:10}
-.hud{background:var(--glass);backdrop-filter:blur(12px);border-radius:14px;padding:8px 12px;border:1px solid rgba(255,255,255,.2)}
-.hud span{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
-.hud b{font-size:26px}
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: var(--bg);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-/* Combo */
-#combo{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);font-family:Bangers;font-size:80px;letter-spacing:.08em;opacity:0;pointer-events:none;text-shadow:0 0 18px var(--pink),0 0 28px var(--cyan)}
-#combo.show{animation:combo .9s ease-out forwards}
-@keyframes combo{0%{opacity:0;transform:translate(-50%,-50%) scale(.6) rotate(-10deg)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2) rotate(6deg)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #1a1a2e 0%, #0a0a0c 100%);
+            border: 4px solid #333;
+            overflow: hidden;
+        }
 
-/* Finger overlay */
-.finger{
- position:absolute; z-index:50; font-size:72px; font-family:system-ui;
- animation:finger .6s ease-out forwards; pointer-events:none;
- filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));
-}
-@keyframes finger{
- 0%{transform:scale(.4) rotate(-20deg);opacity:0}
- 20%{transform:scale(1.2) rotate(10deg);opacity:1}
- 70%{transform:scale(1)}
- 100%{transform:scale(.7) translateY(-20px);opacity:0}
-}
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 100;
+            pointer-events: none;
+        }
 
-/* Start */
-#start{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;z-index:20;background:linear-gradient(180deg,rgba(6,8,24,.7),rgba(6,8,24,.9))}
-#start h1{font-size:64px;letter-spacing:.08em;margin:0;text-shadow:0 0 22px var(--pink)}
-#start p{opacity:.85}
-#start button{font-family:Oxanium;font-weight:900;letter-spacing:.1em;padding:14px 24px;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:var(--glass);color:#fff;cursor:pointer}
+        .stat-box {
+            background: var(--panel);
+            padding: 10px 20px;
+            border-left: 4px solid var(--primary);
+            font-weight: 900;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+        }
 
-/* End */
-#end{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:14px;z-index:30;background:rgba(6,8,24,.9)}
-#end h2{font-size:48px;margin:0}
-#end button{padding:12px 22px;border-radius:14px;border:none;font-weight:900;cursor:pointer}
-</style>
+        /* Screens */
+        .screen {
+            position: absolute;
+            inset: 0;
+            background: var(--panel);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            text-align: center;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 4rem;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            margin-bottom: 40px;
+            letter-spacing: 5px;
+        }
+
+        .btn {
+            background: transparent;
+            color: white;
+            border: 2px solid var(--secondary);
+            padding: 15px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 10px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            color: black;
+            box-shadow: 0 0 30px var(--secondary);
+            transform: scale(1.05);
+        }
+
+        .btn-red { border-color: var(--primary); color: var(--primary); }
+        .btn-red:hover { background: var(--primary); color: white; box-shadow: 0 0 30px var(--primary); }
+
+        /* Targets */
+        .target {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            transition: transform 0.1s;
+            user-select: none;
+            cursor: pointer;
+        }
+
+        .target-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        .target.hit .target-img {
+            filter: grayscale(1) sepia(1) hue-rotate(-50deg) brightness(0.5);
+            border-color: var(--primary);
+        }
+
+        .reaction {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .target.hit .reaction {
+            animation: popUp 0.8s ease-out forwards;
+        }
+
+        @keyframes popUp {
+            0% { opacity: 0; transform: translate(-50%, 0); }
+            20% { opacity: 1; transform: translate(-50%, -20px); }
+            100% { opacity: 0; transform: translate(-50%, -50px); }
+        }
+
+        /* Projectile / Wine Bottle */
+        .bottle {
+            position: absolute;
+            width: 30px;
+            height: 60px;
+            background: #2d5a27;
+            border-radius: 5px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Hidden by default */
+        .hidden { display: none !important; }
+
+        #pause-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 150;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid white;
+            color: white;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .subtitle { font-size: 0.9rem; }
+            .btn { font-size: 1rem; padding: 12px 30px; }
+            .stat-box { font-size: 1rem; padding: 8px 15px; }
+        }
+    </style>
 </head>
 <body>
-<div id="game">
-  <canvas id="c"></canvas>
-  <div id="hud">
-    <div class="hud"><span>Score</span><b id="score">0</b></div>
-    <div class="hud"><span>Temps</span><b id="time">60</b></div>
-  </div>
-  <div id="combo"></div>
-  <div id="start"><h1>MALO'S REVENGE</h1><p>Hit • Combo • Repeat</p><button id="play">PLAY</button></div>
-  <div id="end"><h2>FIN</h2><div id="final"></div><button onclick="location.reload()">REJOUER</button></div>
+
+<div id="game-container">
+    <div id="hud">
+        <div class="stat-box">SCORE: <span id="score-val">0</span></div>
+        <div class="stat-box">TEMPS: <span id="time-val">60</span>s</div>
+    </div>
+
+    <button id="pause-btn" onclick="togglePause()">PAUSE (P)</button>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+        <h1>MALO'S REVENGE</h1>
+        <p class="subtitle">CIRCUS MASSACRE EDITION</p>
+        <p style="margin-bottom: 20px; max-width: 600px;">Balance des bouteilles de pif sur tes potes. Pas de pitié, c'est le cirque ici.</p>
+        <div>
+            <button class="btn" onclick="startGame('easy')">Tranquille (Facile)</button>
+            <button class="btn btn-red" onclick="startGame('hard')">Massacre (Difficile)</button>
+        </div>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pause-screen" class="screen hidden">
+        <h1>PAUSE</h1>
+        <button class="btn" onclick="togglePause()">REPRENDRE</button>
+        <button class="btn btn-red" onclick="location.reload()">QUITTER</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen hidden">
+        <h1 id="final-title">FIN DU GAME</h1>
+        <p id="final-msg" style="font-size: 1.5rem; margin: 20px 0;"></p>
+        <div class="stat-box" style="margin-bottom: 30px;">SCORE FINAL: <span id="final-score">0</span></div>
+        <button class="btn" onclick="location.reload()">REREVANCHE</button>
+    </div>
 </div>
 
 <script>
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const timeEl = document.getElementById('time');
-const comboEl = document.getElementById('combo');
+    // CONFIGURATION DES IMAGES (Fichiers locaux GitHub)
+    const friends = [
+        { name: "Malo", img: "./malo.jpg" },
+        { name: "Marie", img: "./marie.jpg" },
+        { name: "Nico", img: "./nico.jpg" },
+        { name: "Valentine", img: "./valentine.jpg" }
+    ];
 
-function resize(){canvas.width=innerWidth;canvas.height=innerHeight}
-addEventListener('resize',resize);resize();
+    const reactions = ["😭", "🖕", "🤬", "🤮", "🤡"];
+    const hitTexts = ["DANS TA FACE !", "OUPS...", "CHEH !", "BOUM !", "IVROGNE !"];
 
-let score=0, time=60, combo=0, running=false;
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = false;
+    let isPaused = false;
+    let difficulty = 'easy';
+    let gameInterval, timerInterval;
 
-const targets=[];
-const projectiles=[];
+    const container = document.getElementById('game-container');
+    const scoreEl = document.getElementById('score-val');
+    const timeEl = document.getElementById('time-val');
 
-function spawn(){
-  targets.push({
-    x:Math.random()*(innerWidth-140)+70,
-    y:Math.random()*(innerHeight-300)+120,
-    r:60,
-    vx:(Math.random()*2-1)*2,
-    vy:(Math.random()*2-1)*2
-  });
-}
+    // AUDIO ENGINE (Simple & Trashy)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(freq, type, duration) {
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {
+            console.log('Audio non disponible');
+        }
+    }
 
-function throwWine(x,y){
-  const sx=innerWidth/2, sy=innerHeight-60;
-  const dx=x-sx, dy=y-sy;
-  projectiles.push({x:sx,y:sy,vx:dx*2,vy:dy*2,life:1});
-}
+    function startGame(mode) {
+        difficulty = mode;
+        score = 0;
+        timeLeft = (mode === 'hard') ? 45 : 60;
+        gameActive = true;
+        isPaused = false;
 
-function showFinger(x,y){
-  const f=document.createElement('div');
-  f.className='finger';
-  f.textContent='🖕';
-  f.style.left=(x-20)+'px';
-  f.style.top=(y-40)+'px';
-  document.body.appendChild(f);
-  setTimeout(()=>f.remove(),600);
-}
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
 
-function loop(dt){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+        updateHUD();
 
-  targets.forEach(t=>{
-    t.x+=t.vx; t.y+=t.vy;
-    if(t.x<60||t.x>innerWidth-60) t.vx*=-1;
-    if(t.y<100||t.y>innerHeight-200) t.vy*=-1;
-    ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
-    ctx.strokeStyle='white'; ctx.lineWidth=4; ctx.stroke();
-  });
+        // Spawn loop
+        const spawnRate = (mode === 'hard') ? 800 : 1200;
+        gameInterval = setInterval(spawnTarget, spawnRate);
 
-  for(let i=projectiles.length-1;i>=0;i--){
-    const p=projectiles[i];
-    p.vy+=1200*dt; // ARC LÉGER
-    p.x+=p.vx*dt;
-    p.y+=p.vy*dt;
-    p.life-=dt;
+        // Timer loop
+        timerInterval = setInterval(() => {
+            if(!isPaused) {
+                timeLeft--;
+                updateHUD();
+                if(timeLeft <= 0) endGame();
+            }
+        }, 1000);
 
-    ctx.font='36px system-ui'; ctx.fillText('🍷',p.x,p.y);
+        playSound(440, 'square', 0.2);
+    }
 
-    targets.forEach((t,ti)=>{
-      if(Math.hypot(p.x-t.x,p.y-t.y)<t.r){
-        targets.splice(ti,1);
-        projectiles.splice(i,1);
-        score+=10; combo++;
-        scoreEl.textContent=score;
-        showFinger(t.x,t.y);
-        if(combo>=3){ comboEl.textContent='COMBO x'+combo; comboEl.classList.add('show'); setTimeout(()=>comboEl.classList.remove('show'),900); }
-      }
-    });
+    function spawnTarget() {
+        if(!gameActive || isPaused) return;
 
-    if(p.life<=0) projectiles.splice(i,1);
-  }
+        const friend = friends[Math.floor(Math.random() * friends.length)];
+        const target = document.createElement('div');
+        target.className = 'target';
 
-  if(running) requestAnimationFrame(ts=>loop(1/60));
-}
+        // Position aléatoire
+        const x = Math.random() * (window.innerWidth - 150);
+        const y = Math.random() * (window.innerHeight - 200) + 50;
+        target.style.left = x + 'px';
+        target.style.top = y + 'px';
 
-canvas.addEventListener('click',e=>{ if(running) throwWine(e.clientX,e.clientY) });
+        target.innerHTML = `
+            <img src="${friend.img}" class="target-img" alt="${friend.name}" onerror="this.src='https://via.placeholder.com/120?text=${friend.name}'">
+            <div class="reaction">${reactions[Math.floor(Math.random()*reactions.length)]}</div>
+        `;
 
-function start(){
-  running=true; score=0; combo=0; time=60;
-  scoreEl.textContent=0; timeEl.textContent=60;
-  targets.length=0; for(let i=0;i<4;i++) spawn();
-  setInterval(()=>{ if(!running)return; time--; timeEl.textContent=time; if(time<=0){running=false;document.getElementById('end').style.display='flex';document.getElementById('final').textContent='Score : '+score}},1000);
-  loop();
-}
+        // Mouvement
+        const duration = (difficulty === 'hard') ? 2000 : 3500;
+        const animX = (Math.random() - 0.5) * 400;
+        const animY = (Math.random() - 0.5) * 400;
 
-document.getElementById('play').onclick=()=>{document.getElementById('start').style.display='none';start()}
+        target.animate([
+            { transform: 'translate(0,0) scale(0)', opacity: 0 },
+            { transform: 'translate(0,0) scale(1)', opacity: 1, offset: 0.2 },
+            { transform: `translate(${animX}px, ${animY}px) scale(1)`, opacity: 1, offset: 0.8 },
+            { transform: `translate(${animX}px, ${animY}px) scale(0)`, opacity: 0 }
+        ], { duration: duration, easing: 'ease-in-out' });
+
+        target.onclick = (e) => {
+            e.stopPropagation();
+            hit(target);
+        };
+
+        container.appendChild(target);
+        setTimeout(() => { if(target.parentNode) target.remove(); }, duration);
+    }
+
+    function hit(target) {
+        if(target.classList.contains('hit')) return;
+
+        target.classList.add('hit');
+        score += (difficulty === 'hard') ? 20 : 10;
+        updateHUD();
+
+        playSound(150, 'sawtooth', 0.1);
+        playSound(100, 'sine', 0.3);
+
+        // Petit texte flottant
+        const txt = document.createElement('div');
+        txt.style.position = 'absolute';
+        txt.style.left = target.style.left;
+        txt.style.top = target.style.top;
+        txt.style.color = 'var(--secondary)';
+        txt.style.fontWeight = 'bold';
+        txt.style.fontSize = '1.2rem';
+        txt.style.pointerEvents = 'none';
+        txt.style.zIndex = '999';
+        txt.innerText = hitTexts[Math.floor(Math.random()*hitTexts.length)];
+        container.appendChild(txt);
+        txt.animate([{opacity:1, transform:'translateY(0)'}, {opacity:0, transform:'translateY(-100px)'}], 800);
+        setTimeout(() => txt.remove(), 800);
+    }
+
+    function updateHUD() {
+        scoreEl.innerText = score;
+        timeEl.innerText = timeLeft;
+        if(timeLeft < 10) timeEl.style.color = 'var(--primary)';
+    }
+
+    function togglePause() {
+        if(!gameActive) return;
+        isPaused = !isPaused;
+        document.getElementById('pause-screen').classList.toggle('hidden', !isPaused);
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(gameInterval);
+        clearInterval(timerInterval);
+
+        // Nettoyer les cibles restantes
+        document.querySelectorAll('.target').forEach(t => t.remove());
+
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = score;
+
+        let msg = "";
+        if(score < 100) msg = "T'es bourré ? Tu n'as rien touché !";
+        else if(score < 300) msg = "Pas mal, mais Malo attend mieux de toi.";
+        else if(score < 500) msg = "Solide ! T'as fait un carnage.";
+        else msg = "UN VRAI MASSACRE ! T'es le roi du cirque.";
+
+        document.getElementById('final-msg').innerText = msg;
+        playSound(200, 'square', 0.5);
+    }
+
+    // Tir (clic n'importe où)
+    container.onclick = (e) => {
+        if(!gameActive || isPaused) return;
+        if(e.target.closest('.target')) return; // Éviter double son
+        playSound(600, 'sine', 0.05);
+    };
+
+    // Raccourcis clavier
+    window.onkeydown = (e) => {
+        if(e.key.toLowerCase() === 'p') togglePause();
+        if(e.key === 'Escape') togglePause();
+    };
+
+    // Empêcher le menu contextuel sur mobile
+    container.oncontextmenu = (e) => e.preventDefault();
 </script>
+
 </body>
 </html>
