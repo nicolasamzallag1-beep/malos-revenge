@@ -479,20 +479,39 @@
       100%{ opacity:0; transform: translate(-50%,-50%) translateY(-90px) scale(1.05); }
     }
 
+    /* DOIGT D'HONNEUR SPECTACULAIRE */
     .finger{
       position:absolute;
       left:0; top:0;
       transform: translate(-50%,-50%);
       pointer-events:none;
       z-index: 7000;
-      font-size: 84px;
-      filter: drop-shadow(0 0 22px rgba(255,61,127,.55));
-      animation: finger 650ms cubic-bezier(.2,.9,.2,1) forwards;
+      font-size: 140px;
+      filter: 
+        drop-shadow(0 0 35px rgba(255,61,127,.95))
+        drop-shadow(0 0 55px rgba(255,176,0,.85))
+        drop-shadow(0 0 75px rgba(70,227,255,.75));
+      animation: fingerSpectacular 900ms cubic-bezier(.2,.9,.2,1) forwards;
     }
-    @keyframes finger{
-      0%{ opacity:0; transform: translate(-50%,-50%) scale(.25) rotate(-20deg); }
-      20%{ opacity:1; transform: translate(-50%,-50%) scale(1) rotate(8deg); }
-      100%{ opacity:0; transform: translate(-50%,-50%) scale(1.25) rotate(22deg) translateY(-20px); }
+    @keyframes fingerSpectacular{
+      0%{ 
+        opacity:0; 
+        transform: translate(-50%,-50%) scale(.15) rotate(-45deg); 
+      }
+      15%{ 
+        opacity:1; 
+        transform: translate(-50%,-50%) scale(1.35) rotate(12deg); 
+      }
+      30%{
+        transform: translate(-50%,-50%) scale(1.15) rotate(-8deg);
+      }
+      45%{
+        transform: translate(-50%,-50%) scale(1.25) rotate(5deg);
+      }
+      100%{ 
+        opacity:0; 
+        transform: translate(-50%,-50%) scale(1.55) rotate(28deg) translateY(-40px); 
+      }
     }
 
     /* Game over */
@@ -567,6 +586,7 @@
       <button class="btn" id="btnPause" onclick="togglePause()">⏸ Pause</button>
       <button class="btn secondary" onclick="restart()">🔁 Restart</button>
       <button class="btn ghost" onclick="toggleSound()">🔊 Son : <span id="soundState">ON</span></button>
+      <button class="btn ghost" onclick="toggleMusic()">🎵 Musique : <span id="musicState">ON</span></button>
       <div class="hint">Clique pour tirer. <kbd>Espace</kbd> pause. <kbd>M</kbd> mute.</div>
     </div>
   </div>
@@ -655,7 +675,7 @@
       { id: 'malo',      name: 'Malo',      img: 'malo.jpg' },
       { id: 'marie',     name: 'Marie',     img: 'marie.jpg' },
       { id: 'ptitnico',  name: 'PtitNico',  img: 'nico.jpg' },
-      { id: 'valentine', name: 'Valentine', img: 'valentine.jpg' },
+      { id: 'valentine', name: 'Valentine', img: 'valentine.jpg' }
     ];
 
     const DIFF = {
@@ -664,14 +684,13 @@
       hard:   { label:'💀 Difficile',spawn: 640,  speed: 3.4, size: 102 },
     };
 
-    // Punchlines personnalisées (corrigées, sans fautes)
     const LINES = {
       malo: [
         "C'est qui ça ?",
         "On t'a déjà vu quelque part ?",
-        "On va faire comme si rien ne s’était passé.",
+        "On va faire comme si rien ne s'était passé.",
         "T'es perdu frérot ?",
-        "La vie est tellement injuste!",
+        "La vie est injuste!",
       ],
       marie: [
         "Je vais te gifler !",
@@ -698,7 +717,7 @@
         "DANS TA FACE !",
         "BOUM !",
         "AIE !",
-        "TROP FACILE. !",
+        "TROP FACILE !",
         "C'EST TERMINÉ !",
       ]
     };
@@ -725,6 +744,7 @@
     let running = false;
     let paused  = false;
     let soundOn = true;
+    let musicOn = true;
 
     let diffKey = 'medium';
     let score = 0;
@@ -738,13 +758,15 @@
     let combo = 1;
     let comboTimer = null;
 
-    // Audio (WebAudio)
+    // ============ AUDIO (WebAudio) ============
     let AC = null;
     function audio(){
       if (!soundOn) return null;
       if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
       return AC;
     }
+
+    // BRUITAGES TRASH & RIGOLOS
     function beep(type='hit'){
       const ctx = audio();
       if (!ctx) return;
@@ -753,48 +775,115 @@
       o.connect(g); g.connect(ctx.destination);
 
       const t0 = ctx.currentTime;
+
       if (type === 'throw'){
+        // Son de lancer de bouteille (whoosh)
         o.type = 'sine';
-        o.frequency.setValueAtTime(520, t0);
-        o.frequency.exponentialRampToValueAtTime(220, t0 + 0.08);
+        o.frequency.setValueAtTime(680, t0);
+        o.frequency.exponentialRampToValueAtTime(180, t0 + 0.14);
         g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
-        o.start(t0);
-        o.stop(t0 + 0.13);
-        return;
-      }
-      if (type === 'hit'){
-        o.type = 'square';
-        o.frequency.setValueAtTime(180, t0);
-        o.frequency.exponentialRampToValueAtTime(90, t0 + 0.12);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.28, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
         o.start(t0);
         o.stop(t0 + 0.18);
         return;
       }
-      if (type === 'finger'){
-        o.type = 'sawtooth';
-        o.frequency.setValueAtTime(420, t0);
-        o.frequency.exponentialRampToValueAtTime(680, t0 + 0.08);
+
+      if (type === 'hit'){
+        // Son de coup (BONK trash)
+        o.type = 'square';
+        o.frequency.setValueAtTime(240, t0);
+        o.frequency.exponentialRampToValueAtTime(80, t0 + 0.18);
         g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+        g.gain.exponentialRampToValueAtTime(0.38, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22);
         o.start(t0);
-        o.stop(t0 + 0.15);
+        o.stop(t0 + 0.24);
         return;
       }
-      if (type === 'boom'){
-        o.type = 'triangle';
-        o.frequency.setValueAtTime(140, t0);
-        o.frequency.exponentialRampToValueAtTime(55, t0 + 0.25);
+
+      if (type === 'finger'){
+        // Son de doigt d'honneur (BOING rigolo)
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(320, t0);
+        o.frequency.exponentialRampToValueAtTime(880, t0 + 0.06);
+        o.frequency.exponentialRampToValueAtTime(420, t0 + 0.12);
         g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.30);
+        g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
         o.start(t0);
-        o.stop(t0 + 0.32);
+        o.stop(t0 + 0.20);
+        return;
+      }
+
+      if (type === 'boom'){
+        // Explosion (BOOM trash)
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(180, t0);
+        o.frequency.exponentialRampToValueAtTime(40, t0 + 0.35);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.45, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.40);
+        o.start(t0);
+        o.stop(t0 + 0.42);
+      }
+    }
+
+    // ============ MUSIQUE DE FOND ============
+    let musicOsc = null;
+    let musicGain = null;
+    let musicInterval = null;
+
+    function startMusic(){
+      if (!musicOn) return;
+      const ctx = audio();
+      if (!ctx) return;
+
+      // Mélodie simple et rigolote (circus-like)
+      const melody = [
+        { freq: 523.25, dur: 0.2 }, // C5
+        { freq: 587.33, dur: 0.2 }, // D5
+        { freq: 659.25, dur: 0.2 }, // E5
+        { freq: 698.46, dur: 0.2 }, // F5
+        { freq: 783.99, dur: 0.3 }, // G5
+        { freq: 698.46, dur: 0.2 }, // F5
+        { freq: 659.25, dur: 0.2 }, // E5
+        { freq: 587.33, dur: 0.3 }, // D5
+      ];
+
+      let idx = 0;
+      musicInterval = setInterval(()=>{
+        if (!musicOn || !running || paused) return;
+        const note = melody[idx % melody.length];
+        playNote(note.freq, note.dur);
+        idx++;
+      }, 250);
+    }
+
+    function playNote(freq, dur){
+      const ctx = audio();
+      if (!ctx) return;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.type = 'triangle';
+      o.frequency.value = freq;
+
+      const t0 = ctx.currentTime;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.08, t0 + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+      o.start(t0);
+      o.stop(t0 + dur + 0.01);
+    }
+
+    function stopMusic(){
+      if (musicInterval){
+        clearInterval(musicInterval);
+        musicInterval = null;
       }
     }
 
@@ -841,6 +930,8 @@
 
       toast('Clique pour tirer. Fais du bruit.');
 
+      startMusic();
+
       tickTimer = setInterval(()=>{
         if (!running || paused) return;
         timeLeft--;
@@ -875,6 +966,14 @@
       toast(soundOn ? 'Son ON 🔊' : 'Son OFF 🔇');
     }
 
+    function toggleMusic(){
+      musicOn = !musicOn;
+      document.getElementById('musicState').textContent = musicOn ? 'ON' : 'OFF';
+      toast(musicOn ? 'Musique ON 🎵' : 'Musique OFF 🎵');
+      if (!musicOn) stopMusic();
+      else if (running && !paused) startMusic();
+    }
+
     function restart(){
       location.reload();
     }
@@ -890,6 +989,7 @@
       clearInterval(tickTimer);
       spawnTimer = null;
       tickTimer = null;
+      stopMusic();
 
       targets.forEach(t=> t.el.remove());
       targets = [];
@@ -906,6 +1006,7 @@
       clearInterval(spawnTimer);
       clearInterval(tickTimer);
       spawnTimer = tickTimer = null;
+      stopMusic();
       targets.forEach(t=> t.el.remove());
       targets = [];
     }
@@ -1022,7 +1123,7 @@
       el.style.top  = y + 'px';
       el.textContent = '🖕';
       gameEl.appendChild(el);
-      setTimeout(()=>el.remove(), 700);
+      setTimeout(()=>el.remove(), 950);
     }
 
     function throwBottle(x0,y0,x1,y1){
