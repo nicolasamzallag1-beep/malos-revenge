@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Malo's Revenge - Circus Massacre</title>
+  <title>🎪 Malo's Revenge 🎪</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     * {
@@ -11,106 +11,178 @@
       padding: 0;
       box-sizing: border-box;
     }
-
     body {
       font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #1a0033 0%, #330033 50%, #660033 100%);
+      background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #660099 100%);
       color: #fff;
       overflow: hidden;
       height: 100vh;
     }
-
-    #gameCanvas {
-      display: block;
-      background: radial-gradient(circle at 50% 50%, #2a0a3a, #0a0015);
-      cursor: crosshair;
-      border: 3px solid #ff00ff;
-      box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
-    }
-
-    #startScreen, #gameOverScreen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+    #startScreen {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 10;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+      background: radial-gradient(circle, rgba(255,0,150,0.2) 0%, transparent 70%);
     }
-
-    h1 {
+    #startScreen h1 {
       font-size: 4rem;
       font-weight: 900;
-      text-transform: uppercase;
-      background: linear-gradient(45deg, #ff0080, #ff8c00, #40e0d0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 20px rgba(255, 0, 128, 0.8);
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px #ff0099, 0 0 40px #ff0099;
+      animation: pulse 2s infinite;
     }
-
-    p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-      text-align: center;
-      max-width: 600px;
-      line-height: 1.6;
+    #startScreen p {
+      font-size: 1.3rem;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      max-width: 700px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
-
-    button {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.2rem;
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .enter-btn {
+      padding: 20px 60px;
+      font-size: 1.8rem;
       font-weight: 700;
-      padding: 15px 40px;
-      margin: 10px;
-      border: 3px solid #ff00ff;
-      background: linear-gradient(135deg, #ff0080, #ff8c00);
+      background: linear-gradient(45deg, #ff0099, #ff6600);
+      border: none;
+      border-radius: 50px;
       color: #fff;
       cursor: pointer;
       text-transform: uppercase;
-      transition: all 0.3s;
-      box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+      box-shadow: 0 10px 30px rgba(255,0,153,0.5);
+      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
     }
-
-    button:hover {
+    .enter-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(255,0,153,0.7);
+    }
+    #difficultyScreen {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    #difficultyScreen h2 {
+      font-size: 3rem;
+      margin-bottom: 50px;
+      text-shadow: 0 0 15px #00ffff;
+    }
+    .difficulty-buttons {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .difficulty-btn {
+      padding: 20px 40px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      border: 3px solid #fff;
+      border-radius: 15px;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
+      text-transform: uppercase;
+    }
+    .difficulty-btn:hover {
+      background: rgba(255,255,255,0.3);
       transform: scale(1.1);
-      box-shadow: 0 0 40px rgba(255, 0, 255, 0.9);
     }
-
-    #hud {
+    #gameCanvas {
+      display: none;
+      background: linear-gradient(180deg, #0a0015 0%, #1a0033 100%);
+      cursor: crosshair;
+    }
+    #gameUI {
       position: absolute;
       top: 20px;
       left: 20px;
       font-size: 1.5rem;
-      font-weight: 700;
-      z-index: 5;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      z-index: 10;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.8);
     }
-
-    #pauseBtn {
+    #gameUI div {
+      margin-bottom: 10px;
+    }
+    #controls {
       position: absolute;
       top: 20px;
       right: 20px;
-      z-index: 5;
+      z-index: 10;
+      display: none;
+    }
+    .control-btn {
       padding: 10px 20px;
+      margin-left: 10px;
       font-size: 1rem;
+      font-weight: 700;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid #fff;
+      border-radius: 10px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
     }
-
-    .hidden {
-      display: none !important;
+    .control-btn:hover {
+      background: rgba(255,255,255,0.4);
     }
-
+    #endScreen {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+    #endScreen h2 {
+      font-size: 3.5rem;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px #ffff00;
+    }
+    #endScreen p {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
     #finalMessage {
       font-size: 1.5rem;
+      margin: 30px 0;
+      padding: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      max-width: 600px;
+    }
+    .restart-btn {
+      padding: 20px 50px;
+      font-size: 1.5rem;
       font-weight: 700;
-      margin: 20px 0;
-      color: #ff00ff;
-      text-align: center;
+      background: linear-gradient(45deg, #00ff00, #00cc00);
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 10px 30px rgba(0,255,0,0.5);
+      transition: all 0.3s ease;
+      font-family: 'Orbitron', sans-serif;
+    }
+    .restart-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0,255,0,0.7);
     }
   </style>
 </head>
@@ -124,28 +196,36 @@
       Ils vont pleurer, te faire un doigt d'honneur, et toi tu vas kiffer. <br>
       Choisis ton niveau de difficulté et que le massacre commence ! 🍷💀
     </p>
-    <div>
-      <button onclick="startGame('easy')">Facile (Apéro tranquille)</button>
-      <button onclick="startGame('medium')">Moyen (Soirée qui dérape)</button>
-      <button onclick="startGame('hard')">Difficile (Lendemain de cuite)</button>
+    <button class="enter-btn" onclick="showDifficulty()">ENTER</button>
+  </div>
+
+  <div id="difficultyScreen">
+    <h2>Choisis ton niveau de difficulté</h2>
+    <div class="difficulty-buttons">
+      <button class="difficulty-btn" onclick="startGame('easy')">😇 Facile</button>
+      <button class="difficulty-btn" onclick="startGame('medium')">😈 Moyen</button>
+      <button class="difficulty-btn" onclick="startGame('hard')">💀 Difficile</button>
     </div>
   </div>
 
-  <div id="gameOverScreen" class="hidden">
-    <h1>Game Over !</h1>
-    <p id="finalScore"></p>
-    <p id="finalMessage"></p>
-    <button onclick="location.reload()">Rejouer</button>
-  </div>
+  <canvas id="gameCanvas"></canvas>
 
-  <div id="hud" class="hidden">
+  <div id="gameUI">
     <div>Score: <span id="score">0</span></div>
     <div>Temps: <span id="timer">60</span>s</div>
   </div>
 
-  <button id="pauseBtn" class="hidden" onclick="togglePause()">Pause</button>
+  <div id="controls">
+    <button class="control-btn" onclick="togglePause()">⏸️ Pause</button>
+    <button class="control-btn" onclick="restartGame()">🔄 Restart</button>
+  </div>
 
-  <canvas id="gameCanvas"></canvas>
+  <div id="endScreen">
+    <h2>🎉 Game Over 🎉</h2>
+    <p>Score final: <span id="finalScore">0</span></p>
+    <div id="finalMessage"></div>
+    <button class="restart-btn" onclick="restartGame()">Rejouer</button>
+  </div>
 
   <script>
     const canvas = document.getElementById('gameCanvas');
@@ -153,41 +233,14 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    let gameState = 'start';
-    let score = 0;
-    let timeLeft = 60;
-    let isPaused = false;
-    let difficulty = 'medium';
-
     const friends = [
-      { name: 'malo', img: 'https://nicolasamzallag1-beep.github.io/malos-revenge/malo.jpg' },
-      { name: 'marie', img: 'https://nicolasamzallag1-beep.github.io/malos-revenge/marie.jpg' },
-      { name: 'ptitnico', img: 'https://nicolasamzallag1-beep.github.io/malos-revenge/nico.jpg' },
-      { name: 'valentine', img: 'https://nicolasamzallag1-beep.github.io/malos-revenge/valentine.jpg' },
+      { name: 'malo', img: 'https://i.imgur.com/Ks0Iqxu.jpg' },
+      { name: 'marie', img: 'https://i.imgur.com/Ks0Iqxu.jpg' },
+      { name: 'ptitnico', img: 'https://i.imgur.com/Ks0Iqxu.jpg' },
+      { name: 'valentine', img: 'https://i.imgur.com/Ks0Iqxu.jpg' }
     ];
 
-    const loadedImages = {};
-    let imagesLoaded = 0;
-
-    friends.forEach(friend => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        imagesLoaded++;
-        loadedImages[friend.name] = img;
-      };
-      img.onerror = () => {
-        console.error(`Erreur de chargement: ${friend.img}`);
-        imagesLoaded++;
-      };
-      img.src = friend.img;
-    });
-
-    const targets = [];
-    const bottles = [];
-    const particles = [];
-
-    const hitMessagesByCharacter = {
+    const hitMessages = {
       malo: [
         "C'est qui ça ?",
         "On t'a déjà vu quelque part ?",
@@ -196,15 +249,19 @@
         "La vie est injuste!",
         "Frérot… c'était pas ton jour.",
         "Ok, j'avoue… bien joué.",
+        "Encore ? Tu t'acharnes, champion.",
+        "Aïe. Même le clown a eu mal.",
       ],
       marie: [
         "Je vais te gifler !",
         "PAS d'accord.",
-        "Oups,ça part en drame.",
+        "Oups, ça part en drame.",
         "T'as un problème ?",
         "On va te dégommer",
         "Ça va finir au tribunal.",
         "C'est officiel: tu cherches.",
+        "Je te préviens… ça va partir.",
+        "Ok. Là c'est personnel.",
       ],
       ptitnico: [
         "Rastafarai !",
@@ -214,6 +271,8 @@
         "Tu t'acharnes ?",
         "La vibe est cassée.",
         "C'est pas très zen ça.",
+        "Pas très peace & love ça…",
+        "Tu brises l'harmonie cosmique.",
       ],
       valentine: [
         "Elle coûte cher !",
@@ -223,110 +282,149 @@
         "Tu peux pas te le permettre.",
         "Retourne en version gratuite.",
         "Désolée, c'est premium ici.",
-      ],
+        "Ajoute au panier: 1 humiliation.",
+        "Ça va te coûter une excuse.",
+      ]
     };
 
-    const missMessages = [
-      "Raté. Le verre a vécu sa meilleure vie.",
-      "Oups. Mauvaise trajectoire, bonne intention.",
-      "Tu visais la tête, pas l'ambiance.",
-      "Ça frôle… mais non.",
-    ];
-
     const finalMessages = [
-      { min: 0, max: 5, msg: "T'as même pas essayé ou quoi ? Retourne boire ton verre." },
-      { min: 6, max: 15, msg: "Bon… c'était un début. Mais faut s'entraîner encore." },
-      { min: 16, max: 30, msg: "Pas mal ! T'as le potentiel d'un vrai tireur de soirée." },
-      { min: 31, max: 50, msg: "Impressionnant ! T'es officiellement un danger public." },
-      { min: 51, max: 999, msg: "LÉGENDE ! Malo est fier de toi. Le cirque est à toi." },
+      { min: 0, max: 5, msg: "😬 Euh… t'as essayé au moins ?" },
+      { min: 6, max: 15, msg: "🤷 Bon, c'est un début. Mais vraiment un début." },
+      { min: 16, max: 30, msg: "👍 Pas mal ! T'as compris le principe." },
+      { min: 31, max: 50, msg: "🔥 Solide ! T'es chaud bouillant !" },
+      { min: 51, max: 999, msg: "👑 LÉGENDE ! T'es le roi du cirque !" }
     ];
 
-    function startGame(level) {
-      difficulty = level;
-      gameState = 'playing';
-      score = 0;
-      timeLeft = 60;
-      targets.length = 0;
-      bottles.length = 0;
-      particles.length = 0;
+    let gameState = {
+      score: 0,
+      timeLeft: 60,
+      isPaused: false,
+      isRunning: false,
+      difficulty: 'medium',
+      targets: [],
+      bottles: [],
+      particles: []
+    };
 
-      document.getElementById('startScreen').classList.add('hidden');
-      document.getElementById('hud').classList.remove('hidden');
-      document.getElementById('pauseBtn').classList.remove('hidden');
+    let images = {};
+    let imagesLoaded = 0;
 
-      updateHUD();
+    friends.forEach(friend => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        imagesLoaded++;
+        if (imagesLoaded === friends.length) {
+          console.log('Toutes les images sont chargées');
+        }
+      };
+      img.onerror = () => {
+        console.error('Erreur de chargement:', friend.name);
+        imagesLoaded++;
+      };
+      img.src = friend.img;
+      images[friend.name] = img;
+    });
+
+    function showDifficulty() {
+      document.getElementById('startScreen').style.display = 'none';
+      document.getElementById('difficultyScreen').style.display = 'flex';
+    }
+
+    function startGame(difficulty) {
+      gameState.difficulty = difficulty;
+      gameState.score = 0;
+      gameState.timeLeft = 60;
+      gameState.isPaused = false;
+      gameState.isRunning = true;
+      gameState.targets = [];
+      gameState.bottles = [];
+      gameState.particles = [];
+
+      document.getElementById('difficultyScreen').style.display = 'none';
+      document.getElementById('endScreen').style.display = 'none';
+      document.getElementById('gameCanvas').style.display = 'block';
+      document.getElementById('controls').style.display = 'block';
+
+      updateUI();
+      gameLoop();
       startTimer();
       spawnTargets();
-      gameLoop();
+    }
+
+    function spawnTargets() {
+      if (!gameState.isRunning) return;
+
+      const delays = { easy: 2000, medium: 1500, hard: 1000 };
+      const delay = delays[gameState.difficulty];
+
+      const friend = friends[Math.floor(Math.random() * friends.length)];
+      const speeds = { easy: 2, medium: 3.5, hard: 5 };
+      const speed = speeds[gameState.difficulty];
+
+      const target = {
+        x: -100,
+        y: Math.random() * (canvas.height - 150) + 50,
+        width: 80,
+        height: 80,
+        speed: speed,
+        friend: friend,
+        hit: false,
+        hitTime: 0,
+        message: ''
+      };
+
+      gameState.targets.push(target);
+
+      setTimeout(() => spawnTargets(), delay);
     }
 
     function startTimer() {
       const timerInterval = setInterval(() => {
-        if (gameState !== 'playing' || isPaused) return;
-        timeLeft--;
-        updateHUD();
-        if (timeLeft <= 0) {
+        if (!gameState.isRunning || gameState.isPaused) return;
+
+        gameState.timeLeft--;
+        updateUI();
+
+        if (gameState.timeLeft <= 0) {
           clearInterval(timerInterval);
           endGame();
         }
       }, 1000);
     }
 
-    function spawnTargets() {
-      const spawnInterval = difficulty === 'easy' ? 2000 : difficulty === 'medium' ? 1500 : 1000;
-      setInterval(() => {
-        if (gameState !== 'playing' || isPaused) return;
-        const friend = friends[Math.floor(Math.random() * friends.length)];
-        const speedMultiplier = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 1.5 : 2.5;
-        const target = {
-          x: Math.random() > 0.5 ? -100 : canvas.width + 100,
-          y: Math.random() * (canvas.height - 200) + 100,
-          width: 80,
-          height: 80,
-          speed: (Math.random() * 2 + 2) * speedMultiplier,
-          direction: Math.random() > 0.5 ? 1 : -1,
-          friend: friend,
-          hit: false,
-          hitTimer: 0,
-        };
-        targets.push(target);
-      }, spawnInterval);
-    }
-
-    function updateHUD() {
-      document.getElementById('score').textContent = score;
-      document.getElementById('timer').textContent = timeLeft;
-    }
-
-    function togglePause() {
-      isPaused = !isPaused;
-      document.getElementById('pauseBtn').textContent = isPaused ? 'Reprendre' : 'Pause';
+    function updateUI() {
+      document.getElementById('score').textContent = gameState.score;
+      document.getElementById('timer').textContent = gameState.timeLeft;
     }
 
     canvas.addEventListener('click', (e) => {
-      if (gameState !== 'playing' || isPaused) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      if (!gameState.isRunning || gameState.isPaused) return;
 
-      bottles.push({
-        x: x,
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      const bottle = {
+        x: clickX,
         y: canvas.height,
-        targetY: y,
-        speed: 15,
-      });
+        targetY: clickY,
+        speed: 15
+      };
+
+      gameState.bottles.push(bottle);
 
       playSound('throw');
     });
 
     function gameLoop() {
-      if (gameState !== 'playing') return;
+      if (!gameState.isRunning) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (!isPaused) {
-        updateBottles();
+      if (!gameState.isPaused) {
         updateTargets();
+        updateBottles();
         updateParticles();
       }
 
@@ -337,140 +435,107 @@
       requestAnimationFrame(gameLoop);
     }
 
-    function updateBottles() {
-      for (let i = bottles.length - 1; i >= 0; i--) {
-        bottles[i].y -= bottles[i].speed;
-        if (bottles[i].y < 0) {
-          bottles.splice(i, 1);
-          showMessage(missMessages[Math.floor(Math.random() * missMessages.length)]);
+    function updateTargets() {
+      gameState.targets = gameState.targets.filter(target => {
+        if (!target.hit) {
+          target.x += target.speed;
+          return target.x < canvas.width + 100;
+        } else {
+          return Date.now() - target.hitTime < 1000;
         }
-      }
+      });
     }
 
-    function updateTargets() {
-      for (let i = targets.length - 1; i >= 0; i--) {
-        const target = targets[i];
+    function updateBottles() {
+      gameState.bottles = gameState.bottles.filter(bottle => {
+        bottle.y -= bottle.speed;
 
-        if (target.hit) {
-          target.hitTimer++;
-          if (target.hitTimer > 60) {
-            targets.splice(i, 1);
-          }
-          continue;
-        }
+        gameState.targets.forEach(target => {
+          if (!target.hit &&
+              bottle.x > target.x &&
+              bottle.x < target.x + target.width &&
+              bottle.y > target.y &&
+              bottle.y < target.y + target.height) {
 
-        target.x += target.speed * target.direction;
-
-        if (target.x < -150 || target.x > canvas.width + 150) {
-          targets.splice(i, 1);
-        }
-
-        for (let j = bottles.length - 1; j >= 0; j--) {
-          const bottle = bottles[j];
-          if (
-            bottle.x > target.x &&
-            bottle.x < target.x + target.width &&
-            bottle.y > target.y &&
-            bottle.y < target.y + target.height
-          ) {
             target.hit = true;
-            bottles.splice(j, 1);
-            score += 10;
-            updateHUD();
+            target.hitTime = Date.now();
+            target.message = hitMessages[target.friend.name][
+              Math.floor(Math.random() * hitMessages[target.friend.name].length)
+            ];
+
+            gameState.score += 10;
+            updateUI();
             createParticles(target.x + target.width / 2, target.y + target.height / 2);
             playSound('hit');
-            const messages = hitMessagesByCharacter[target.friend.name];
-            showMessage(messages[Math.floor(Math.random() * messages.length)]);
-            break;
           }
-        }
-      }
+        });
+
+        return bottle.y > 0;
+      });
     }
 
     function updateParticles() {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
+      gameState.particles = gameState.particles.filter(p => {
         p.x += p.vx;
         p.y += p.vy;
         p.life--;
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-        }
-      }
+        return p.life > 0;
+      });
     }
 
     function drawTargets() {
-      targets.forEach(target => {
-        if (loadedImages[target.friend.name]) {
+      gameState.targets.forEach(target => {
+        if (target.hit) {
           ctx.save();
-          ctx.globalAlpha = target.hit ? 0.5 : 1;
-          ctx.drawImage(loadedImages[target.friend.name], target.x, target.y, target.width, target.height);
+          ctx.globalAlpha = 0.5;
+          ctx.filter = 'grayscale(100%)';
+        }
 
-          if (target.hit) {
-            ctx.font = '40px Arial';
-            ctx.fillText('🖕😭', target.x + 10, target.y + 50);
-          }
-          ctx.restore();
+        if (images[target.friend.name] && images[target.friend.name].complete) {
+          ctx.drawImage(images[target.friend.name], target.x, target.y, target.width, target.height);
         } else {
-          ctx.fillStyle = target.hit ? '#666' : '#ff00ff';
+          ctx.fillStyle = '#ff0099';
           ctx.fillRect(target.x, target.y, target.width, target.height);
-          ctx.fillStyle = '#fff';
-          ctx.font = '12px Orbitron';
-          ctx.fillText(target.friend.name, target.x + 10, target.y + 40);
-          if (target.hit) {
-            ctx.font = '30px Arial';
-            ctx.fillText('🖕😭', target.x + 10, target.y + 70);
-          }
+        }
+
+        if (target.hit) {
+          ctx.restore();
+          ctx.font = '16px Orbitron';
+          ctx.fillStyle = '#ffff00';
+          ctx.textAlign = 'center';
+          ctx.fillText(target.message, target.x + target.width / 2, target.y - 10);
+          ctx.fillText('🖕😭', target.x + target.width / 2, target.y + target.height + 25);
         }
       });
     }
 
     function drawBottles() {
-      ctx.fillStyle = '#8B4513';
-      bottles.forEach(bottle => {
-        ctx.fillRect(bottle.x - 5, bottle.y - 15, 10, 15);
+      gameState.bottles.forEach(bottle => {
+        ctx.font = '30px Arial';
+        ctx.fillText('🍷', bottle.x - 15, bottle.y);
       });
     }
 
     function drawParticles() {
-      particles.forEach(p => {
-        ctx.fillStyle = `rgba(255, ${Math.floor(Math.random() * 100)}, 255, ${p.life / 30})`;
+      gameState.particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life / 30;
         ctx.fillRect(p.x, p.y, 5, 5);
+        ctx.globalAlpha = 1;
       });
     }
 
     function createParticles(x, y) {
       for (let i = 0; i < 20; i++) {
-        particles.push({
+        gameState.particles.push({
           x: x,
           y: y,
           vx: (Math.random() - 0.5) * 10,
           vy: (Math.random() - 0.5) * 10,
           life: 30,
+          color: ['#ff0099', '#00ffff', '#ffff00', '#ff6600'][Math.floor(Math.random() * 4)]
         });
       }
-    }
-
-    let messageTimeout;
-    function showMessage(text) {
-      const msgDiv = document.createElement('div');
-      msgDiv.textContent = text;
-      msgDiv.style.position = 'absolute';
-      msgDiv.style.top = '50%';
-      msgDiv.style.left = '50%';
-      msgDiv.style.transform = 'translate(-50%, -50%)';
-      msgDiv.style.fontSize = '2rem';
-      msgDiv.style.fontWeight = '700';
-      msgDiv.style.color = '#ff00ff';
-      msgDiv.style.textShadow = '2px 2px 8px rgba(0,0,0,0.8)';
-      msgDiv.style.zIndex = '20';
-      msgDiv.style.pointerEvents = 'none';
-      document.body.appendChild(msgDiv);
-
-      clearTimeout(messageTimeout);
-      messageTimeout = setTimeout(() => {
-        msgDiv.remove();
-      }, 2000);
     }
 
     function playSound(type) {
@@ -482,7 +547,7 @@
       gainNode.connect(audioContext.destination);
 
       if (type === 'throw') {
-        oscillator.frequency.value = 200;
+        oscillator.frequency.value = 400;
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
         oscillator.start(audioContext.currentTime);
@@ -496,15 +561,25 @@
       }
     }
 
-    function endGame() {
-      gameState = 'over';
-      document.getElementById('hud').classList.add('hidden');
-      document.getElementById('pauseBtn').classList.add('hidden');
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+    }
 
-      const finalMsg = finalMessages.find(m => score >= m.min && score <= m.max);
-      document.getElementById('finalScore').textContent = `Score final: ${score} points`;
-      document.getElementById('finalMessage').textContent = finalMsg ? finalMsg.msg : "Bien joué !";
-      document.getElementById('gameOverScreen').classList.remove('hidden');
+    function restartGame() {
+      startGame(gameState.difficulty);
+    }
+
+    function endGame() {
+      gameState.isRunning = false;
+      document.getElementById('gameCanvas').style.display = 'none';
+      document.getElementById('controls').style.display = 'none';
+      document.getElementById('endScreen').style.display = 'flex';
+      document.getElementById('finalScore').textContent = gameState.score;
+
+      const message = finalMessages.find(m => 
+        gameState.score >= m.min && gameState.score <= m.max
+      );
+      document.getElementById('finalMessage').textContent = message ? message.msg : "🎉 Incroyable !";
     }
 
     window.addEventListener('resize', () => {
