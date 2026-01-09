@@ -1,1611 +1,1595 @@
-<!DOCTYPE html>
-<html lang="fr">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Malo's Revenge — Apéro Arena 🍷</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&display=swap" rel="stylesheet" />
-
-  <style>
-    :root{
-      --bg1:#0b1020;
-      --bg2:#141a33;
-      --neon:#7c3aed;
-      --neon2:#22d3ee;
-      --gold:#fbbf24;
-      --good:#34d399;
-      --bad:#fb7185;
-      --glass: rgba(255,255,255,.08);
-      --glass2: rgba(255,255,255,.14);
-      --stroke: rgba(255,255,255,.14);
-      --shadow: rgba(0,0,0,.45);
-    }
-
-    *{ box-sizing:border-box; }
-    html, body{ height:100%; }
-    body{
-      margin:0;
-      font-family: "Oxanium", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 900px at 30% 20%, rgba(124,58,237,.28), transparent 55%),
-                  radial-gradient(1000px 800px at 80% 60%, rgba(34,211,238,.22), transparent 50%),
-                  linear-gradient(180deg, var(--bg1), var(--bg2));
-      color:#fff;
-      overflow:hidden;
-      user-select:none;
-      cursor: crosshair;
-    }
-
-    /* subtle animated grain */
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 30%),
-        radial-gradient(circle at 70% 40%, rgba(255,255,255,.05), transparent 28%),
-        radial-gradient(circle at 40% 80%, rgba(255,255,255,.04), transparent 25%);
-      mix-blend-mode: overlay;
-      pointer-events:none;
-      opacity:.55;
-      animation: drift 8s ease-in-out infinite;
-    }
-    @keyframes drift{
-      0%,100%{ transform: translate3d(0,0,0) scale(1); }
-      50%{ transform: translate3d(-12px,10px,0) scale(1.02); }
-    }
-
-    #game{
-      position:relative;
-      width:100vw;
-      height:100vh;
-      overflow:hidden;
-    }
-
-    canvas{
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-      display:none;
-    }
-
-    /* HUD */
-    #hud{
-      position:absolute;
-      inset:18px 18px auto 18px;
-      display:none;
-      gap:12px;
-      align-items:flex-start;
-      z-index:30;
-      pointer-events:none;
-    }
-
-    .hudCard{
-      pointer-events:auto;
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      border: 1px solid var(--stroke);
-      border-radius: 16px;
-      padding: 10px 14px;
-      min-width: 140px;
-      box-shadow: 0 18px 40px var(--shadow);
-      backdrop-filter: blur(14px);
-    }
-
-    .hudLabel{
-      font-size: 11px;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.75);
-      margin-bottom:4px;
-    }
-
-    .hudValue{
-      font-size: 26px;
-      font-weight: 800;
-      line-height:1.05;
-      text-shadow: 0 0 18px rgba(255,255,255,.18);
-    }
-
-    #hudScore .hudValue{ color: var(--gold); }
-    #hudTime .hudValue{ color: var(--good); }
-    #hudHits .hudValue{ color: var(--neon2); }
-
-    #topRight{
-      position:absolute;
-      top:18px;
-      right:18px;
-      z-index:31;
-      display:none;
-      gap:10px;
-      align-items:center;
-    }
-
-    .btn{
-      font-family: "Oxanium", sans-serif;
-      font-weight: 800;
-      letter-spacing:.08em;
-      text-transform: uppercase;
-      border: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      transition: transform .15s ease, background .15s ease, border-color .15s ease;
-      box-shadow: 0 14px 34px var(--shadow);
-      backdrop-filter: blur(14px);
-    }
-    .btn:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,.25); }
-    .btn:active{ transform: translateY(0); }
-
-    /* Start overlay */
-    #start{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:16px;
-      z-index:50;
-      background:
-        radial-gradient(900px 650px at 50% 35%, rgba(124,58,237,.35), transparent 55%),
-        radial-gradient(800px 600px at 65% 65%, rgba(34,211,238,.22), transparent 55%),
-        linear-gradient(180deg, rgba(10,14,30,.65), rgba(10,14,30,.88));
-      backdrop-filter: blur(14px);
-    }
-
-    .title{
-      font-size: clamp(34px, 6vw, 70px);
-      font-weight: 800;
-      letter-spacing: .06em;
-      line-height:1;
-      margin:0;
-      text-align:center;
-      text-shadow:
-        0 0 28px rgba(124,58,237,.35),
-        0 0 24px rgba(34,211,238,.22),
-        0 16px 60px rgba(0,0,0,.55);
-    }
-
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border:1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      backdrop-filter: blur(14px);
-      box-shadow: 0 18px 42px var(--shadow);
-      color: rgba(255,255,255,.9);
-      font-weight:700;
-      letter-spacing:.08em;
-      text-transform: uppercase;
-      font-size: 12px;
-    }
-
-    .panel{
-      width:min(860px, calc(100vw - 32px));
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      box-shadow: 0 28px 70px rgba(0,0,0,.55);
-      backdrop-filter: blur(16px);
-      padding: 18px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    .diff{
-      border:none;
-      cursor:pointer;
-      border-radius: 18px;
-      padding: 14px 14px;
-      color:#fff;
-      text-align:left;
-      background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.16);
-      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
-      box-shadow: 0 18px 46px rgba(0,0,0,.45);
-      position:relative;
-      overflow:hidden;
-      font-family: "Oxanium", sans-serif;
-    }
-
-    .diff::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background: radial-gradient(500px 220px at 30% 20%, rgba(34,211,238,.28), transparent 55%),
-                  radial-gradient(420px 220px at 90% 80%, rgba(124,58,237,.32), transparent 55%);
-      opacity:.8;
-      pointer-events:none;
-    }
-
-    .diff:hover{
-      transform: translateY(-3px);
-      border-color: rgba(255,255,255,.28);
-      box-shadow: 0 26px 64px rgba(0,0,0,.55);
-    }
-
-    .diffName{ position:relative; z-index:1; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
-    .diffDesc{ position:relative; z-index:1; margin-top:6px; color: rgba(255,255,255,.78); font-weight:600; font-size:13px; line-height:1.3; }
-
-    .hint{
-      margin-top: 12px;
-      color: rgba(255,255,255,.75);
-      font-weight:600;
-      line-height:1.55;
-      text-align:center;
-      font-size: 14px;
-    }
-
-    .kbd{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding: 2px 8px;
-      border-radius: 8px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.25);
-      font-weight:800;
-      letter-spacing:.06em;
-      font-size: 12px;
-      margin: 0 3px;
-    }
-
-    /* End overlay */
-    #end{
-      position:absolute;
-      inset:0;
-      display:none;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:16px;
-      z-index:60;
-      background: linear-gradient(180deg, rgba(10,14,30,.78), rgba(10,14,30,.92));
-      backdrop-filter: blur(16px);
-    }
-
-    .endTitle{ font-size: clamp(28px, 5vw, 54px); font-weight: 900; letter-spacing:.06em; margin:0; }
-    .endScore{ font-size: clamp(20px, 4vw, 34px); font-weight: 800; color: var(--gold); }
-    .endMsg{ max-width: 860px; padding: 0 18px; text-align:center; color: rgba(255,255,255,.88); font-weight: 600; line-height:1.75; }
-
-    /* Floating hit bubble (anchored near target, clamped inside viewport) */
-    .hitBubble{
-      position:absolute;
-      z-index:80;
-      max-width: min(360px, calc(100vw - 16px));
-      padding: 10px 12px;
-      border-radius: 16px;
-      background: rgba(255,255,255,.92);
-      color: #0b1020;
-      font-weight: 800;
-      box-shadow: 0 18px 50px rgba(0,0,0,.45);
-      border: 1px solid rgba(0,0,0,.08);
-      pointer-events:none;
-      transform-origin: left center;
-      animation: pop .18s ease-out;
-    }
-
-    .hitBubble small{
-      display:block;
-      margin-top:4px;
-      font-weight:700;
-      opacity:.75;
-      letter-spacing:.04em;
-    }
-
-    @keyframes pop{
-      from{ transform: translate3d(0,6px,0) scale(.92); opacity:0; }
-      to{ transform: translate3d(0,0,0) scale(1); opacity:1; }
-    }
-
-    /* little arrow */
-    .hitBubble::after{
-      content:"";
-      position:absolute;
-      width: 10px;
-      height: 10px;
-      background: rgba(255,255,255,.92);
-      left: -5px;
-      top: 16px;
-      transform: rotate(45deg);
-      border-left: 1px solid rgba(0,0,0,.08);
-      border-bottom: 1px solid rgba(0,0,0,.08);
-    }
-
-    /* Combo banner */
-    #combo{
-      position:absolute;
-      left:50%;
-      top:50%;
-      transform: translate(-50%,-50%);
-      font-size: clamp(34px, 6vw, 72px);
-      font-weight: 900;
-      letter-spacing:.06em;
-      color: #fff;
-      text-shadow:
-        0 0 26px rgba(34,211,238,.35),
-        0 0 32px rgba(124,58,237,.32),
-        0 20px 70px rgba(0,0,0,.7);
-      opacity:0;
-      pointer-events:none;
-      z-index:40;
-    }
-    #combo.show{ animation: combo .9s ease-out forwards; }
-    @keyframes combo{
-      0%{ opacity:0; transform: translate(-50%,-50%) scale(.75) rotate(-6deg); }
-      20%{ opacity:1; transform: translate(-50%,-50%) scale(1.1) rotate(2deg); }
-      70%{ opacity:1; transform: translate(-50%,-50%) scale(1.02) rotate(-1deg); }
-      100%{ opacity:0; transform: translate(-50%,-50%) scale(.9) rotate(0deg); }
-    }
-
-    
-    /* Floating wine glasses animation */
-    .floaters{
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-      z-index:55;
-      overflow:hidden;
-    }
-    .floater{
-      position:absolute;
-      font-size: 34px;
-      opacity:.28;
-      filter: drop-shadow(0 12px 24px rgba(0,0,0,.35));
-      animation: floatUp var(--dur, 10s) linear infinite;
-    }
-    @keyframes floatUp{
-      0%{ transform: translate3d(0, 110vh, 0) rotate(0deg) scale(var(--s,1)); opacity:0; }
-      10%{ opacity: var(--o,.28); }
-      90%{ opacity: var(--o,.28); }
-      100%{ transform: translate3d(0, -140px, 0) rotate(360deg) scale(var(--s,1)); opacity:0; }
-    }
-
-    /* Mobile adjustments */
-    @media (max-width: 900px){
-      .grid{ grid-template-columns: repeat(2, 1fr); }
-      #hud{ inset: 14px 14px auto 14px; }
-      #topRight{ top:14px; right:14px; }
-      .hudCard{ min-width: 120px; }
-    }
-  
-
-    /* Animation doigt d'honneur (grosse et animée) */
-    .middleFinger{
-      position:absolute;
-      font-size: 72px;
-      z-index:90;
-      pointer-events:none;
-      animation: fingerPop 1.15s cubic-bezier(.16,1,.3,1) forwards;
-      text-shadow: 0 0 20px rgba(255,255,255,.55), 0 10px 34px rgba(0,0,0,.55);
-      filter: drop-shadow(0 18px 26px rgba(0,0,0,.35));
-      will-change: transform, opacity;
-    }
-    @keyframes fingerPop{
-      0%{ transform: translate(-50%,-50%) scale(0) rotate(var(--r, -16deg)); opacity:0; }
-      14%{ transform: translate(-50%,-50%) scale(1.55) rotate(calc(var(--r, -16deg) * -0.35)); opacity:1; }
-      34%{ transform: translate(-50%,-50%) scale(1.25) rotate(calc(var(--r, -16deg) * 0.25)); opacity:1; }
-      72%{ transform: translate(-50%,-50%) scale(1.32) rotate(calc(var(--r, -16deg) * -0.15)); opacity:1; }
-      100%{ transform: translate(-50%,-50%) scale(0.88) rotate(0deg); opacity:0; }
-    }
-
-    /* Micro screen shake (feel de hit) */
-    #game.shake{ animation: shake .28s ease-out; }
-    @keyframes shake{
-      0%{ transform: translate3d(0,0,0); }
-      18%{ transform: translate3d(-3px, 2px,0) rotate(-0.2deg); }
-      38%{ transform: translate3d(3px, -2px,0) rotate(0.2deg); }
-      60%{ transform: translate3d(-2px, -1px,0) rotate(-0.1deg); }
-      100%{ transform: translate3d(0,0,0); }
-    }
-</style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.2">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
 </head>
 <body>
-  <div id="game">
-    <canvas id="c"></canvas>
-
-    <div id="hud">
-      <div class="hudCard" id="hudScore"><div class="hudLabel">Score</div><div class="hudValue" id="score">0</div></div>
-      <div class="hudCard" id="hudTime"><div class="hudLabel">Temps</div><div class="hudValue" id="time">60</div></div>
-      <div class="hudCard" id="hudHits"><div class="hudLabel">Hits</div><div class="hudValue" id="hits">0</div></div>
-    </div>
-
-    <div id="topRight">
-      <button class="btn" id="restartGameBtn">↻ Restart</button>
-      <button class="btn" id="pauseBtn">⏸ Pause</button>
-      <button class="btn" id="soundBtn" title="Activer/Désactiver le son">🔊 Son</button>
-    </div>
-
-    <div id="combo"></div>
-
-    <div id="start">
-      <!-- Floating wine glasses background -->
-      <div class="floaters" aria-hidden="true">
-        <span class="floater" style="left:6%; --dur:11s; --s:.9; --o:.22;">🍷</span>
-        <span class="floater" style="left:18%; --dur:9s; --s:1.1; --o:.28; animation-delay:-2s;">🍷</span>
-        <span class="floater" style="left:33%; --dur:12s; --s:.8; --o:.18; animation-delay:-6s;">🍷</span>
-        <span class="floater" style="left:51%; --dur:10s; --s:1.25; --o:.26; animation-delay:-4s;">🍷</span>
-        <span class="floater" style="left:67%; --dur:13s; --s:.95; --o:.20; animation-delay:-8s;">🍷</span>
-        <span class="floater" style="left:82%; --dur:9.5s; --s:1.05; --o:.24; animation-delay:-5s;">🍷</span>
-        <span class="floater" style="left:92%; --dur:12.5s; --s:.85; --o:.18; animation-delay:-9s;">🍷</span>
-      </div>
-
-      <!-- Friend photos preview -->
-      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;">
-        <img src="./malo.jpg" alt="Malo" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-2deg);">
-        <img src="./marie.jpg" alt="Marie" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(1deg);">
-        <img src="./nico.jpg" alt="Nico" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-1deg);">
-        <img src="./valentine.jpg" alt="Valentine" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(2deg);">
-      </div>
-
-      <h1 class="title">MALO'S REVENGE</h1>
-      <div class="badge">🎪 Cirque trash • 🍷 Apéro • 🖕 Vengeance</div>
-      <div class="hint" style="max-width:860px;padding:0 18px;margin-top:2px;">
-        Bienvenue dans le cirque le plus trash de l'histoire. Malo veut sa revanche.<br/>
-        Lance des verres de vin sur tes potes qui défilent. Ils vont pleurer, te faire un doigt d'honneur — et toi tu vas kiffer.
-      </div>
-
-      <div class="panel">
-        <!-- ENTER button (visible by default) -->
-        <div id="enterSection" style="display:flex;justify-content:center;margin:16px 0 10px;">
-          <button class="btn" id="enterBtn" style="font-size:18px;padding:12px 32px;">ENTER</button>
-        </div>
-
-        <!-- Difficulty grid (hidden by default) -->
-        <div id="diffSection" style="display:none;">
-          <div class="grid">
-            <button class="diff" data-diff="easy"><div class="diffName">Easy</div><div class="diffDesc">Cool & smooth<br/>Pour s'échauffer.</div></button>
-            <button class="diff" data-diff="medium"><div class="diffName">Medium</div><div class="diffDesc">Ça commence à piquer<br/>mais c'est gérable.</div></button>
-            <button class="diff" data-diff="hard"><div class="diffName">Hard</div><div class="diffDesc">Réflexes obligatoires<br/>sinon c'est honteux.</div></button>
-            <button class="diff" data-diff="insane"><div class="diffName">Insane</div><div class="diffDesc">Speedrun d'apéro<br/>ça part en orbite.</div></button>
-          </div>
-          <div class="hint">
-            Clique pour <b>lancer un verre de vin</b> 🍷 vers une tête.<br/>
-            <span class="kbd">P</span> pause • <span class="kbd">R</span> restart • Le son démarre au premier clic.
-          </div>
-        </div>
-      </div>
-    </div></div>
-
-    <div id="end">
-      <h2 class="endTitle">FIN DE PARTIE</h2>
-      <div class="endScore">Score : <span id="finalScore">0</span></div>
-      <div class="endMsg" id="finalMsg"></div>
-      <button class="btn" id="restartBtn">↻ Rejouer</button>
-    </div>
-  </div>
-
-  <script>
-    /**********************
-     *  CONFIG (PHOTOS)
-     *  - Mets les images au même niveau que index.html : malo.jpg, marie.jpg, nico.jpg, valentine.jpg
-     *  - Ou remplace par des URLs directes (ex: xxxx.jpg)
-     **********************/
-    const friends = [
-      { id: "malo", name: "Malo", img: "./malo.jpg" },
-      { id: "marie", name: "Marie", img: "./marie.jpg" },
-      { id: "ptitnico", name: "PtitNico", img: "./nico.jpg" },
-      { id: "valentine", name: "Valentine", img: "./valentine.jpg" },
-    ];
-
-    // === IMAGE PRELOADING (fix bubbles vides) ===
-    const imageCache = new Map();
-    function preloadImages(){
-      for (const f of friends){
-        const img = new Image();
-        img.src = f.img;
-        img.onload = () => imageCache.set(f.id, img);
-        imageCache.set(f.id, img); // set immediately to avoid race
-      }
-    }
-
-
-    const diff = {
-      easy:   { speed: 2.1, spawnMs: 1900, duration: 60, points: 10 },
-      medium: { speed: 3.0, spawnMs: 1400, duration: 60, points: 15 },
-      hard:   { speed: 4.2, spawnMs: 1000, duration: 60, points: 25 },
-      insane: { speed: 5.5, spawnMs: 780,  duration: 60, points: 40 },
-    };
-
-    // --- FEEL / JOUABILITÉ (ajouts) ---
-    // Un arc léger + une durée de vol adaptative = lancers plus naturels et qui atteignent vraiment la cible.
-    const GRAVITY = 2600; // px/s²
-    const AIM_ASSIST_RADIUS = 120; // px (snap doux vers la tête la plus proche)
-
-
-    /**********************
-     *  HIT MESSAGES (TES PHRASES — CONSERVÉES)
-     **********************/
-    const hitMessagesByCharacter = {
-      malo: [
-        "C'est qui ça ?",
-        "On t'a déjà vu quelque part ?",
-        "On va faire comme si rien ne s'était passé.",
-        "T'es perdu frérot ?",
-        "La vie est injuste!",
-        // extras
-        "Frérot… c'était pas ton jour.",
-        "Ok, j'avoue… bien joué.",
-      
-        // ajouts
-        "Encore ? Tu t'acharnes, champion.",
-        "Aïe. Même le clown a eu mal.",
-      ],
-      marie: [
-        "Je vais te gifler !",
-        "PAS d'accord.",
-        "Oups,ça part en drame.",
-        "T'as un problème ?",
-        "On va te dégommer",
-        // extras
-        "Ça va finir au tribunal.",
-        "C'est officiel: tu cherches.",
-      
-        // ajouts
-        "Je te préviens… ça va partir.",
-        "Ok. Là c'est personnel.",
-      ],
-      ptitnico: [
-        "Rastafarai !",
-        "On dirait un problème.",
-        "Bad vibes ",
-        "Merci d'avoir tenté.",
-        "Tu t'acharnes ?",
-        // extras
-        "La vibe est cassée.",
-        "C'est pas très zen ça.",
-      
-        // ajouts
-        "Pas très peace & love ça…",
-        "Tu brises l'harmonie cosmique.",
-      ],
-      valentine: [
-        "Elle coûte cher !",
-        "T'as vraiment cru que c'était une bonne idée ?",
-        "C'était hors budget, désolé.",
-        "Tout le monde n'a pas le niveau.",
-        "Tu peux pas te le permettre.",
-        // extras
-        "Retourne en version gratuite.",
-        "Désolée, c'est premium ici.",
-      
-        // ajouts
-        "Ajoute au panier: 1 humiliation.",
-        "Ça va te coûter une excuse.",
-      ],
-    };
-
-    const missMessages = [
-      "Raté. Le verre a vécu sa meilleure vie.",
-      "Oups. Mauvaise trajectoire, bonne intention.",
-      "Tu visais la tête, pas l’ambiance.",
-      "Ça frôle06 mais non.",
-      "Tu as lancé avec le cœur. Le verre, lui, a fui.",
-      "C'était ambitieux. Trop.",
-      "Le cirque applaudit06 mais pas pour toi.",
-    ];
-
-    const finalMessages = [
-      "T'es vraiment nul, même Malo est déçu.",
-      "Pas mal, mais Malo s'attendait à mieux.",
-      "Bien joué, Malo commence à pleurer.",
-      "Impressionnant, Malo est en larmes.",
-      "Légende vivante, Malo te respecte enfin.",
-    ];
-
-    /**********************
-     *  DOM
-     **********************/
-    const gameEl = document.getElementById("game");
-    const canvas = document.getElementById("c");
-    const ctx = canvas.getContext("2d");
-
-    const startEl = document.getElementById("start");
-    const endEl = document.getElementById("end");
-    const restartBtn = document.getElementById("restartBtn");
-
-    const hudEl = document.getElementById("hud");
-    const topRightEl = document.getElementById("topRight");
-    const pauseBtn = document.getElementById("pauseBtn");
-    const soundBtn = document.getElementById("soundBtn");
-
-    const scoreEl = document.getElementById("score");
-    const timeEl = document.getElementById("time");
-    const hitsEl = document.getElementById("hits");
-    const comboEl = document.getElementById("combo");
-    const finalScoreEl = document.getElementById("finalScore");
-    const finalMsgEl = document.getElementById("finalMsg");
-
-    /**********************
-     *  CANVAS SIZE
-     **********************/
-    function resize(){
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-      canvas.width = Math.floor(window.innerWidth * dpr);
-      canvas.height = Math.floor(window.innerHeight * dpr);
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    window.addEventListener("resize", resize);
-
-    /**********************
-     *  HELPERS
-     **********************/
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const rand = (a,b) => a + Math.random() * (b-a);
-    const pick = arr => arr[(Math.random() * arr.length) | 0];
-
-    function drawImageCover(ctx, img, x, y, w, h){
-      // center-crop like CSS object-fit: cover
-      const iw = img.naturalWidth || img.width;
-      const ih = img.naturalHeight || img.height;
-      if (!iw || !ih) return;
-      const r = Math.max(w / iw, h / ih);
-      const nw = iw * r;
-      const nh = ih * r;
-      const cx = x + (w - nw) / 2;
-      const cy = y + (h - nh) / 2;
-      ctx.drawImage(img, cx, cy, nw, nh);
-    }
-
-    function showCombo(n){
-      comboEl.textContent = `COMBO x${n}`;
-      comboEl.classList.remove("show");
-      void comboEl.offsetWidth;
-      comboEl.classList.add("show");
-    }
-
-    function showHitBubble(text, x, y, who){
-      // x,y are in viewport coordinates (same as our canvas logical coords)
-      const el = document.createElement("div");
-      el.className = "hitBubble";
-      el.innerHTML = `${escapeHtml(text)}<small>${escapeHtml(who)}</small>`;
-      gameEl.appendChild(el);
-
-      // initial position (to the right of the face)
-      el.style.left = (x + 18) + "px";
-      el.style.top  = (y - 18) + "px";
-
-      // clamp inside viewport after we know its size
-      const pad = 8;
-      const r = el.getBoundingClientRect();
-      let left = parseFloat(el.style.left);
-      let top = parseFloat(el.style.top);
-
-      // if it overflows on the right, flip to the left side
-      if (left + r.width > window.innerWidth - pad){
-        left = x - r.width - 18;
-        el.style.transformOrigin = "right center";
-        el.style.setProperty("--arrow", "left");
-        // flip arrow
-        el.style.setProperty("--flip", "1");
-        el.style.setProperty("--flip", "1");
-        el.style.setProperty("--flip", "1");
-        el.style.setProperty("--flip", "1");
-        // manually move arrow
-        el.style.setProperty("--arrowSide", "right");
-        el.style.setProperty("--arrowLeft", "auto");
-      }
-
-      // clamp within viewport
-      left = clamp(left, pad, window.innerWidth - r.width - pad);
-      top  = clamp(top,  pad, window.innerHeight - r.height - pad);
-      el.style.left = left + "px";
-      el.style.top  = top + "px";
-
-      // If placed on left side, move arrow to right
-      const placedLeft = (left < x);
-      if (placedLeft){
-        el.style.transformOrigin = "right center";
-        el.style.setProperty("--arrowOnLeft", "0");
-        el.style.setProperty("--arrowX", "auto");
-        el.style.setProperty("--arrowR", "-5px");
-        el.style.setProperty("--arrowL", "auto");
-        el.style.setProperty("--arrow", "right");
-        el.style.setProperty("--arrow", "right");
-        el.style.setProperty("--arrow", "right");
-        el.style.setProperty("--arrow", "right");
-        // override pseudo positioning via inline style trick: add a class
-        el.classList.add("leftSide");
-      }
-
-      setTimeout(() => {
-        el.style.transition = "opacity .22s ease, transform .22s ease";
-        el.style.opacity = "0";
-        el.style.transform = "translateY(-6px) scale(.98)";
-        setTimeout(() => el.remove(), 240);
-      }, 1050);
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
-    }
-
-    // tweak arrow when bubble is on the left
-    const extraCSS = document.createElement("style");
-    extraCSS.textContent = `
-      .hitBubble.leftSide::after{
-        left: auto;
-        right: -5px;
-        transform: rotate(225deg);
-        border-left: none;
-        border-bottom: none;
-        border-right: 1px solid rgba(0,0,0,.08);
-        border-top: 1px solid rgba(0,0,0,.08);
-      }
-    `;
-    document.head.appendChild(extraCSS);
-
-    /**********************
-     *  AUDIO (ENTRAINANT)
-     **********************/
-    let audio = null;
-
-    function initAudio(){
-      if (audio) return audio;
-
-      const AC = window.AudioContext || window.webkitAudioContext;
-      const ctxA = new AC();
-
-      const master = ctxA.createGain();
-      master.gain.value = 0.55;
-
-      const comp = ctxA.createDynamicsCompressor();
-      comp.threshold.value = -18;
-      comp.knee.value = 24;
-      comp.ratio.value = 6;
-      comp.attack.value = 0.003;
-      comp.release.value = 0.12;
-
-      master.connect(comp);
-      comp.connect(ctxA.destination);
-
-      // simple "color" filter for music
-      const musicBus = ctxA.createGain();
-      const sfxBus = ctxA.createGain();
-      musicBus.gain.value = 0.9;
-      sfxBus.gain.value = 1.0;
-
-      const musicLP = ctxA.createBiquadFilter();
-      musicLP.type = "lowpass";
-      musicLP.frequency.value = 9500;
-      musicLP.Q.value = 0.7;
-
-      musicBus.connect(musicLP);
-      musicLP.connect(master);
-      sfxBus.connect(master);
-
-      const state = {
-        ctx: ctxA,
-        enabled: true,
-        bpm: 142,
-        next: 0,
-        timer: null,
-        step: 0,
-      };
-
-      function now(){ return ctxA.currentTime; }
-
-      function tone(freq, t0, dur, type, gain, out=musicBus){
-        const o = ctxA.createOscillator();
-        const g = ctxA.createGain();
-        o.type = type;
-        o.frequency.setValueAtTime(freq, t0);
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(gain, t0 + 0.008);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-        o.connect(g);
-        g.connect(out);
-        o.start(t0);
-        o.stop(t0 + dur + 0.02);
-      }
-
-      function noise(t0, dur, gain, hp=6000, out=sfxBus){
-        const len = Math.max(1, Math.floor(ctxA.sampleRate * dur));
-        const buf = ctxA.createBuffer(1, len, ctxA.sampleRate);
-        const d = buf.getChannelData(0);
-        for (let i=0;i<len;i++) d[i] = Math.random()*2-1;
-        const src = ctxA.createBufferSource();
-        src.buffer = buf;
-
-        const f = ctxA.createBiquadFilter();
-        f.type = "highpass";
-        f.frequency.setValueAtTime(hp, t0);
-
-        const g = ctxA.createGain();
-        g.gain.setValueAtTime(0.0001, t0);
-        g.gain.exponentialRampToValueAtTime(gain, t0 + 0.004);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-
-        src.connect(f);
-        f.connect(g);
-        g.connect(out);
-        src.start(t0);
-        src.stop(t0 + dur + 0.02);
-      }
-
-      // SFX: throw (glass whoosh + clink)
-      function sfxThrow(){
-        if (!state.enabled) return;
-        const t = now();
-        noise(t, 0.05, 0.07, 1800, sfxBus);
-        tone(950, t, 0.06, "sine", 0.10, sfxBus);
-        tone(1550, t + 0.012, 0.05, "sine", 0.07, sfxBus);
-      }
-
-      // SFX: hit (thud + glass crackle)
-      function sfxHit(){
-        if (!state.enabled) return;
-        const t = now();
-        tone(90, t, 0.10, "sine", 0.22, sfxBus);
-        tone(2200, t + 0.02, 0.07, "square", 0.10, sfxBus);
-        noise(t + 0.018, 0.10, 0.12, 1200, sfxBus);
-      }
-
-      function sfxMiss(){
-        if (!state.enabled) return;
-        const t = now();
-        tone(420, t, 0.08, "triangle", 0.07, sfxBus);
-        tone(330, t + 0.03, 0.09, "sine", 0.05, sfxBus);
-      }
-
-      // SFX: combo (petit cri de victoire)
-      function sfxCombo(n){
-        if (!state.enabled) return;
-        const t = now();
-        const base = 520 + Math.min(420, n*18);
-        tone(base, t, 0.08, "square", 0.09, sfxBus);
-        tone(base*1.33, t+0.04, 0.10, "triangle", 0.07, sfxBus);
-        noise(t+0.02, 0.06, 0.06, 5200, sfxBus);
-      }
-
-
-      // Music: upbeat electro/chiptune-ish groove
-      // Pattern: kick/snare/hat + bass + arp lead
-      const kickSteps = new Set([0, 4, 8, 12, 14]);
-      const snrSteps  = new Set([4, 12]);
-      const hatSteps  = new Set([2, 6, 10, 14]);
-
-      const bassSeq = [110, 110, 98, 110, 130, 110, 98, 146]; // 8-step
-      const arp = [523.25, 659.25, 783.99, 659.25]; // C5 E5 G5 E5
-
-      function schedule(){
-        if (!state.enabled) return;
-        const spb = 60 / state.bpm;
-        const stepDur = 0.25 * spb;
-
-        while (state.next < now() + 0.12){
-          const s = state.step % 16;
-          const t = state.next;
-
-          // Kick
-          if (kickSteps.has(s)){
-            // short pitch drop
-            const o = ctxA.createOscillator();
-            const g = ctxA.createGain();
-            o.type = "sine";
-            o.frequency.setValueAtTime(150, t);
-            o.frequency.exponentialRampToValueAtTime(46, t + 0.11);
-            g.gain.setValueAtTime(0.0001, t);
-            g.gain.exponentialRampToValueAtTime(0.26, t + 0.005);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-            o.connect(g);
-            g.connect(musicBus);
-            o.start(t);
-            o.stop(t + 0.18);
-          }
-
-          // Snare
-          if (snrSteps.has(s)){
-            noise(t, 0.06, 0.10, 2000, musicBus);
-            tone(190, t, 0.05, "triangle", 0.07, musicBus);
-          }
-
-          // Hat
-          if (hatSteps.has(s)){
-            noise(t, 0.03, 0.05, 7000, musicBus);
-          }
-
-          // Bass (on 8th steps)
-          if (s % 2 === 0){
-            const f = bassSeq[(s/2) % bassSeq.length];
-            tone(f, t, 0.14, "sawtooth", 0.065, musicBus);
-          }
-
-          // Arp lead (syncopated)
-          if ([1, 5, 9, 13].includes(s)){
-            const f = arp[(s/4) | 0];
-            tone(f, t, 0.10, "square", 0.05, musicBus);
-            tone(f/2, t, 0.10, "triangle", 0.03, musicBus);
-          }
-
-          state.step++;
-          state.next += stepDur;
-        }
-      }
-
-      function startMusic(){
-        state.next = now();
-        state.step = 0;
-        if (state.timer) clearInterval(state.timer);
-        state.timer = setInterval(schedule, 25);
-      }
-
-      function stopMusic(){
-        if (state.timer) clearInterval(state.timer);
-        state.timer = null;
-      }
-
-      audio = {
-        state,
-        startMusic,
-        stopMusic,
-        sfxThrow,
-        sfxHit,
-        sfxMiss,
-        sfxCombo,
-        async resume(){
-          if (ctxA.state === "suspended") {
-            try { await ctxA.resume(); } catch(e) {}
-          }
-        }
-      };
-
-      startMusic();
-      return audio;
-    }
-
-    async function ensureAudio(){
-      const a = initAudio();
-      await a.resume();
-      return a;
-    }
-
-    function setSoundEnabled(on){
-      const a = initAudio();
-      a.state.enabled = on;
-      soundBtn.textContent = on ? "🔊 Son" : "🔇 Son";
-      if (!on){
-        // keep scheduler but silence via master gain?
-        // easiest: set master gain low
-        // (leave dynamics stable)
-        // We'll just rely on enabled flag for new notes.
-      }
-    }
-
-    /**********************
-     *  GAME STATE
-     **********************/
-    let S = null;
-
-    function newState(){
-      return {
-        running:false,
-        paused:false,
-        d:"easy",
-        score:0,
-        hits:0,
-        combo:0,
-        timeLeft:60,
-        targets:[],
-        projectiles:[],
-        particles:[],
-        spawnT:0,
-        lastT:0,
-        timerId:null,
-        pointer: { x: window.innerWidth/2, y: window.innerHeight/2, has:false },
-      };
-    }
-
-    function reset(){
-      S = newState();
-      updateHud();
-    }
-
-    function updateHud(){
-      scoreEl.textContent = S.score;
-      timeEl.textContent = S.timeLeft;
-      hitsEl.textContent = S.hits;
-    }
-
-    /**********************
-     *  TARGETS
-     **********************/
-    function spawnTarget(){
-      const f = friends[(Math.random()*friends.length)|0];
-      const size = 148; // bigger faces (jeu vidéo vibe)
-
-      const x = rand(20, window.innerWidth - size - 20);
-      const y = rand(90, window.innerHeight - size - 140);
-
-      const sp = diff[S.d].speed;
-      const vx = rand(-1, 1) * sp;
-      const vy = rand(-1, 1) * sp;
-
-      // Use preloaded image from cache
-      const img = imageCache.get(f.id);
-      if (!img || !img.complete) {
-        console.warn(`Image for ${f.id} not ready, using fallback`);
-      }
-
-      S.targets.push({
-        f,
-        x,
-        y,
-        vx,
-        vy,
-        size,
-        img,
-        wob: rand(0, Math.PI*2),
-      });
-    }
-
-    function updateTargets(dt){
-      for (const t of S.targets){
-        t.wob += dt * 4.2;
-        const wobble = Math.sin(t.wob) * 0.35;
-
-        t.x += (t.vx + wobble) * dt * 60;
-        t.y += (t.vy - wobble) * dt * 60;
-
-        if (t.x < 12){ t.x = 12; t.vx = Math.abs(t.vx); }
-        if (t.x > window.innerWidth - t.size - 12){ t.x = window.innerWidth - t.size - 12; t.vx = -Math.abs(t.vx); }
-        if (t.y < 80){ t.y = 80; t.vy = Math.abs(t.vy); }
-        if (t.y > window.innerHeight - t.size - 120){ t.y = window.innerHeight - t.size - 120; t.vy = -Math.abs(t.vy); }
-      }
-    }
-
-    function drawTargets(){
-      for (const t of S.targets){
-        const cx = t.x + t.size/2;
-        const cy = t.y + t.size/2;
-        const r = t.size/2;
-
-        // glow ring
-        ctx.save();
-        ctx.shadowColor = "rgba(34,211,238,.35)";
-        ctx.shadowBlur = 22;
-
-        // outer ring
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + 6, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(255,255,255,.10)";
-        ctx.fill();
-
-        // mask circle
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.closePath();
-        ctx.save();
-        ctx.clip();
-
-        if (t.img.complete && (t.img.naturalWidth || t.img.width)){
-          drawImageCover(ctx, t.img, t.x, t.y, t.size, t.size);
-        } else {
-          // fallback placeholder
-          ctx.fillStyle = "rgba(255,255,255,.12)";
-          ctx.fillRect(t.x, t.y, t.size, t.size);
-        }
-
-        // subtle overlay
-        const g = ctx.createLinearGradient(t.x, t.y, t.x + t.size, t.y + t.size);
-        g.addColorStop(0, "rgba(0,0,0,.06)");
-        g.addColorStop(1, "rgba(0,0,0,.22)");
-        ctx.fillStyle = g;
-        ctx.fillRect(t.x, t.y, t.size, t.size);
-
-        ctx.restore();
-
-        // border
-        ctx.strokeStyle = "rgba(255,255,255,.68)";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
-        ctx.stroke();
-
-        // name tag
-        ctx.shadowColor = "transparent";
-        ctx.fillStyle = "rgba(0,0,0,.55)";
-        const tagW = ctx.measureText(t.f.name).width + 22;
-        const tagX = cx - tagW/2;
-        const tagY = t.y + t.size + 8;
-        roundRect(ctx, tagX, tagY, tagW, 22, 10);
-        ctx.fill();
-        ctx.fillStyle = "rgba(255,255,255,.92)";
-        ctx.font = "700 13px Oxanium";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(t.f.name, cx, tagY + 11);
-
-        ctx.restore();
-      }
-    }
-
-    function roundRect(ctx,x,y,w,h,r){
-      const rr = Math.min(r, w/2, h/2);
-      ctx.beginPath();
-      ctx.moveTo(x+rr, y);
-      ctx.arcTo(x+w, y, x+w, y+h, rr);
-      ctx.arcTo(x+w, y+h, x, y+h, rr);
-      ctx.arcTo(x, y+h, x, y, rr);
-      ctx.arcTo(x, y, x+w, y, rr);
-      ctx.closePath();
-    }
-
-    /**********************
-     *  PROJECTILES (LANCER DE VERRE DE VIN — PRO)
-     **********************/
-    function throwWine(tx, ty){
-      // Origine du lancer (bas centre)
-      const fromX = window.innerWidth / 2;
-      const fromY = window.innerHeight - 84;
-
-      // AIM ASSIST: si tu cliques proche d'une tête, ça "snap" doucement sur le centre
-      let ax = tx, ay = ty;
-      let best = null;
-      let bestD = 1e9;
-      for (const t of S.targets){
-        const cx = t.x + t.size/2;
-        const cy = t.y + t.size/2;
-        const d = Math.hypot(ax - cx, ay - cy);
-        if (d < bestD){ bestD = d; best = {cx, cy}; }
-      }
-      if (best && bestD <= AIM_ASSIST_RADIUS){
-        ax = best.cx;
-        ay = best.cy;
-      }
-
-      const dx = ax - fromX;
-      const dy = ay - fromY;
-      const dist = Math.max(1, Math.hypot(dx, dy));
-
-      // Durée adaptative => le verre arrive vraiment à l'endroit visé
-      const baseSpeed = 1550; // px/s (plus nerveux)
-      const dur = clamp(dist / baseSpeed, 0.18, 0.62);
-
-      // Balistique légère (arc) : vy initial compense la gravité
-      const vx = dx / dur;
-      const vy = (dy - 0.5 * GRAVITY * dur * dur) / dur;
-
-      S.projectiles.push({
-        x: fromX,
-        y: fromY,
-        vx,
-        vy,
-        life: dur + 0.35,
-        rot: rand(0, Math.PI*2),
-        rvel: rand(-12, 12),
-        sparkle: 1.0,
-      });
-
-      // Petit flash de départ (feedback)
-      for (let i=0;i<10;i++){
-        S.particles.push({
-          x: fromX,
-          y: fromY,
-          vx: rand(-220,220),
-          vy: rand(-380,-120),
-          life: rand(0.12, 0.22),
-          size: rand(2,4),
-          col: `rgba(251,191,36,${rand(0.25,0.75)})`,
-        });
-      }
-    }
-
-    function updateProjectiles(dt){
-      for (let i=S.projectiles.length-1;i>=0;i--){
-        const p = S.projectiles[i];
-
-        // physics
-        p.vy += GRAVITY * dt;
-        p.x  += p.vx * dt;
-        p.y  += p.vy * dt;
-        p.rot += p.rvel * dt;
-        p.life -= dt;
-
-        // trail particles (plus sexy)
-        const tN = (S.d === "insane") ? 3 : 2;
-        for (let k=0;k<tN;k++){
-          if (Math.random() < 0.95){
-            const wine = Math.random() < 0.35;
-            S.particles.push({
-              x: p.x + rand(-6,6),
-              y: p.y + rand(-6,6),
-              vx: rand(-60,60),
-              vy: rand(-60,60),
-              life: rand(0.12, 0.22),
-              size: rand(2,4),
-              col: wine
-                ? `rgba(251,113,133,${rand(0.25,0.65)})`  // rosé-chaos
-                : `rgba(251,191,36,${rand(0.25,0.75)})`, // or du verre
-            });
-          }
-        }
-
-        if (p.life <= 0 || p.x < -120 || p.x > window.innerWidth+120 || p.y < -140 || p.y > window.innerHeight+140){
-          S.projectiles.splice(i,1);
-          // small miss feedback (sometimes)
-          if (Math.random() < 0.45){
-            audio?.sfxMiss?.();
-            showHitBubble(pick(missMessages), clamp(p.x, 60, window.innerWidth-60), clamp(p.y, 80, window.innerHeight-120), "Miss");
-          }
-        }
-      }
-    }
-
-    function drawProjectiles(){
-      ctx.save();
-      ctx.font = "44px system-ui";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for (const p of S.projectiles){
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.shadowColor = "rgba(251,191,36,.35)";
-        ctx.shadowBlur = 22;
-        ctx.fillText("🍷", 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    /**********************
-     *  PARTICLES
-     **********************/
-    function burst(x,y){
-      for (let i=0;i<18;i++){
-        S.particles.push({
-          x, y,
-          vx: rand(-260,260),
-          vy: rand(-320,200),
-          life: rand(0.25, 0.45),
-          size: rand(2,5),
-          col: `rgba(34,211,238,${rand(0.25,0.8)})`,
-        });
-      }
-      for (let i=0;i<10;i++){
-        S.particles.push({
-          x, y,
-          vx: rand(-220,220),
-          vy: rand(-220,220),
-          life: rand(0.2, 0.35),
-          size: rand(3,6),
-          col: `rgba(124,58,237,${rand(0.2,0.7)})`,
-        });
-      }
-    }
-
-    function updateParticles(dt){
-      for (let i=S.particles.length-1;i>=0;i--){
-        const p = S.particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vx *= Math.pow(0.08, dt); // friction
-        p.vy += 520 * dt; // gravity
-        p.life -= dt;
-        if (p.life <= 0) S.particles.splice(i,1);
-      }
-    }
-
-    function drawParticles(){
-      for (const p of S.particles){
-        // Ring marker (vx=vy=0 and transparent color)
-        if (p.vx === 0 && p.vy === 0 && p.col === "rgba(255,255,255,.0)"){
-          const t = clamp(p.life / 0.22, 0, 1);
-          const rr = 18 + (1 - t) * 34;
-          ctx.save();
-          ctx.globalAlpha = t;
-          ctx.strokeStyle = "rgba(34,211,238,.55)";
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, rr, 0, Math.PI*2);
-          ctx.stroke();
-          ctx.strokeStyle = "rgba(124,58,237,.35)";
-          ctx.lineWidth = 6;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, rr + 6, 0, Math.PI*2);
-          ctx.stroke();
-          ctx.restore();
-          continue;
-        }
-
-        ctx.fillStyle = p.col;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-        ctx.fill();
-      }
-    }
-
-    /**********************
-     *  COLLISIONS
-     **********************/
-    function collide(){
-      for (let pi=S.projectiles.length-1; pi>=0; pi--){
-        const p = S.projectiles[pi];
-        for (let ti=S.targets.length-1; ti>=0; ti--){
-          const t = S.targets[ti];
-          const cx = t.x + t.size/2;
-          const cy = t.y + t.size/2;
-          const r = t.size/2;
-          const d = Math.hypot(p.x - cx, p.y - cy);
-          if (d < r - 6){
-            // HIT
-            S.projectiles.splice(pi,1);
-            S.targets.splice(ti,1);
-
-            S.hits++;
-            S.combo++;
-            S.score += diff[S.d].points + Math.min(40, (S.combo-1) * 2);
-            updateHud();
-
-            // effects
-            audio?.sfxHit?.();
-            burst(cx, cy);
-            // micro shake + ring
-            gameEl.classList.remove("shake");
-            void gameEl.offsetWidth;
-            gameEl.classList.add("shake");
-
-            // ring visuel (quick)
-            S.particles.push({ x: cx, y: cy, vx: 0, vy: 0, life: 0.22, size: 2, col: "rgba(255,255,255,.0)" });
-
-            // Doigt d'honneur GROS et ANIMÉ (feedback de hit)
-            const finger = document.createElement("div");
-            finger.className = "middleFinger";
-            finger.textContent = "🖕";
-            finger.style.left = cx + "px";
-            finger.style.top = cy + "px";
-            finger.style.setProperty("--r", (rand(-22, 22)).toFixed(1) + "deg");
-            gameEl.appendChild(finger);
-            setTimeout(() => finger.remove(), 1200);
-
-            // message near face (clamped — won't go off-screen)
-            const msg = pick(hitMessagesByCharacter[t.f.id] || ["Touché !"]);
-            showHitBubble(msg, cx + r + 8, cy, t.f.name);
-
-            if (S.combo === 3 || S.combo === 5 || (S.combo > 5 && S.combo % 5 === 0)){
-              showCombo(S.combo);
-              audio?.sfxCombo?.(S.combo);
-            }
-
-            break;
-          }
-        }
-      }
-    }
-
-    /**********************
-     *  LOOP
-     **********************/
-    
-    function drawAim(){
-      // Crosshair viseur (optionnel mais sympa)
-      if (!S.pointer.has) return;
-      ctx.save();
-      ctx.strokeStyle = "rgba(251,191,36,.55)";
-      ctx.lineWidth = 2;
-      const cx = S.pointer.x;
-      const cy = S.pointer.y;
-      const r = 18;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.stroke();
-      // crosshair lines
-      ctx.beginPath();
-      ctx.moveTo(cx - r - 8, cy);
-      ctx.lineTo(cx - r - 2, cy);
-      ctx.moveTo(cx + r + 2, cy);
-      ctx.lineTo(cx + r + 8, cy);
-      ctx.moveTo(cx, cy - r - 8);
-      ctx.lineTo(cx, cy - r - 2);
-      ctx.moveTo(cx, cy + r + 2);
-      ctx.lineTo(cx, cy + r + 8);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    function loop(ts){
-      if (!S.running) return;
-      if (!S.lastT) S.lastT = ts;
-      const dt = clamp((ts - S.lastT) / 1000, 0, 0.033);
-      S.lastT = ts;
-
-      if (!S.paused){
-        S.spawnT += dt * 1000;
-        if (S.spawnT >= diff[S.d].spawnMs){
-          S.spawnT = 0;
-          spawnTarget();
-        }
-
-        updateTargets(dt);
-        updateProjectiles(dt);
-        updateParticles(dt);
-        collide();
-      }
-
-      // draw
-      ctx.clearRect(0,0,window.innerWidth, window.innerHeight);
-
-      // parallax glow vignette
-      const vg = ctx.createRadialGradient(window.innerWidth*0.5, window.innerHeight*0.45, 120, window.innerWidth*0.5, window.innerHeight*0.5, Math.max(window.innerWidth, window.innerHeight));
-      vg.addColorStop(0, "rgba(255,255,255,.03)");
-      vg.addColorStop(1, "rgba(0,0,0,.28)");
-      ctx.fillStyle = vg;
-      ctx.fillRect(0,0,window.innerWidth, window.innerHeight);
-
-      drawParticles();
-      drawTargets();
-      drawProjectiles();
-      drawAim();
-
-      requestAnimationFrame(loop);
-    }
-
-    /**********************
-     *  TIMER
-     **********************/
-    function startTimer(){
-      if (S.timerId) clearInterval(S.timerId);
-      S.timerId = setInterval(() => {
-        if (!S.running || S.paused) return;
-        S.timeLeft--;
-        updateHud();
-        if (S.timeLeft <= 0) endGame();
-      }, 1000);
-    }
-
-    /**********************
-     *  START / END
-     **********************/
-    async function startGame(which){
-      reset();
-      S.d = which;
-      S.timeLeft = diff[which].duration;
-
-      await ensureAudio();
-      initAudio().startMusic();
-
-      startEl.style.display = "none";
-      endEl.style.display = "none";
-      canvas.style.display = "block";
-      hudEl.style.display = "flex";
-      topRightEl.style.display = "flex";
-
-      S.running = true;
-      S.paused = false;
-      pauseBtn.textContent = "⏸ Pause";
-
-      // spawn initial targets
-      for (let i=0;i<4;i++) spawnTarget();
-
-      startTimer();
-      requestAnimationFrame(loop);
-    }
-
-    function endGame(){
-      S.running = false;
-      if (S.timerId) clearInterval(S.timerId);
-
-      initAudio().stopMusic();
-
-      canvas.style.display = "none";
-      hudEl.style.display = "none";
-      topRightEl.style.display = "none";
-
-      finalScoreEl.textContent = S.score;
-      let msg = finalMessages[0].msg;
-      for (const m of finalMessages){
-        if (S.score >= m.min && S.score <= m.max){ msg = m.msg; break; }
-      }
-      finalMsgEl.textContent = msg;
-      endEl.style.display = "flex";
-    }
-
-    function restart(){
-      endEl.style.display = "none";
-      startEl.style.display = "flex";
-    }
-
-    function togglePause(){
-      if (!S.running) return;
-      S.paused = !S.paused;
-      pauseBtn.textContent = S.paused ? "▶ Reprendre" : "⏸ Pause";
-    }
-
-    /**********************
-     *  INPUTS
-     **********************/
-    
-    // Suivi du viseur (plus jouable)
-    canvas.addEventListener("pointermove", (e) => {
-      if (!S) return;
-      const rect = canvas.getBoundingClientRect();
-      S.pointer.x = e.clientX - rect.left;
-      S.pointer.y = e.clientY - rect.top;
-      S.pointer.has = true;
-    });
-
-    canvas.addEventListener("pointerleave", () => {
-      if (!S) return;
-      S.pointer.has = false;
-    });
-
-canvas.addEventListener("click", async (e) => {
-      if (!S.running || S.paused) return;
-      await ensureAudio();
-      initAudio().sfxThrow();
-
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      throwWine(x, y);
-    });
-
-    
-    // === ENTER BUTTON LOGIC ===
-    const enterBtn = document.getElementById("enterBtn");
-    const enterSection = document.getElementById("enterSection");
-    const diffSection = document.getElementById("diffSection");
-
-    if (enterBtn && enterSection && diffSection){
-      enterBtn.addEventListener("click", async () => {
-        // Warm up audio (helps iOS)
-        try { await ensureAudio(); } catch(e) { console.warn("Audio warmup failed", e); }
-
-        // Hide ENTER, show difficulty buttons
-        enterSection.style.display = "none";
-        diffSection.style.display = "block";
-      });
-    }
-
-    document.querySelectorAll(".diff").forEach(btn => {
-      btn.addEventListener("click", () => startGame(btn.dataset.diff));
-    });
-
-    restartBtn.addEventListener("click", restart);
-    pauseBtn.addEventListener("click", togglePause);
-
-    soundBtn.addEventListener("click", async () => {
-      await ensureAudio();
-      const a = initAudio();
-      setSoundEnabled(!a.state.enabled);
-    });
-
-    window.addEventListener("keydown", (e) => {
-      const k = e.key.toLowerCase();
-      if (k === "p") togglePause();
-      if (k === "r"){
-        if (S.running) endGame();
-        restart();
-      }
-    });
-
-    /**********************
-     *  INIT
-     **********************/
-    preloadImages();
-    reset();
-    resize();
-    setSoundEnabled(true);
-  </script>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="fr"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Malo's Revenge — Apéro Arena 🍷&lt;/title&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.googleapis.com" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&amp;display=swap" rel="stylesheet" /&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>:root{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--bg1:#0b1020;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--bg2:#141a33;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--neon:#7c3aed;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--neon2:#22d3ee;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--gold:#fbbf24;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--good:#34d399;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--bad:#fb7185;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--glass: rgba(255,255,255,.08);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--glass2: rgba(255,255,255,.14);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--stroke: rgba(255,255,255,.14);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>--shadow: rgba(0,0,0,.45);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>*{ box-sizing:border-box; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>html, body{ height:100%; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-family: "Oxanium", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(1200px 900px at 30% 20%, rgba(124,58,237,.28), transparent 55%),</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>radial-gradient(1000px 800px at 80% 60%, rgba(34,211,238,.22), transparent 50%),</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>linear-gradient(180deg, var(--bg1), var(--bg2));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color:#fff;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>user-select:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>cursor: crosshair;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* subtle animated grain */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body::before{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>content:"";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:fixed;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 30%),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>radial-gradient(circle at 70% 40%, rgba(255,255,255,.05), transparent 28%),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>radial-gradient(circle at 40% 80%, rgba(255,255,255,.04), transparent 25%);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>mix-blend-mode: overlay;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>opacity:.55;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>animation: drift 8s ease-in-out infinite;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes drift{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0%,100%{ transform: translate3d(0,0,0) scale(1); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>50%{ transform: translate3d(-12px,10px,0) scale(1.02); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>#game{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>width:100vw;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>height:100vh;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>width:100%;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>height:100%;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* HUD */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#hud{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:18px 18px auto 18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap:12px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:flex-start;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:30;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hudCard{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:auto;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid var(--stroke);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 14px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>min-width: 140px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 18px 40px var(--shadow);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(14px);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hudLabel{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 11px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing: .14em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: rgba(255,255,255,.75);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom:4px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hudValue{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 26px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 800;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>line-height:1.05;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-shadow: 0 0 18px rgba(255,255,255,.18);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>#hudScore .hudValue{ color: var(--gold); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#hudTime .hudValue{ color: var(--good); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#hudHits .hudValue{ color: var(--neon2); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>#topRight{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>top:18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>right:18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:31;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap:10px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.btn{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-family: "Oxanium", sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 800;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.08em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid var(--stroke);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: #fff;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 14px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 14px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>cursor:pointer;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transition: transform .15s ease, background .15s ease, border-color .15s ease;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 14px 34px var(--shadow);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(14px);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.btn:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,.25); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.btn:active{ transform: translateY(0); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Start overlay */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#start{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>flex-direction:column;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>justify-content:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap:16px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:50;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>radial-gradient(900px 650px at 50% 35%, rgba(124,58,237,.35), transparent 55%),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>radial-gradient(800px 600px at 65% 65%, rgba(34,211,238,.22), transparent 55%),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>linear-gradient(180deg, rgba(10,14,30,.65), rgba(10,14,30,.88));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(14px);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.title{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: clamp(34px, 6vw, 70px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 800;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing: .06em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>line-height:1;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-align:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-shadow:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 0 28px rgba(124,58,237,.35),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 0 24px rgba(34,211,238,.22),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 16px 60px rgba(0,0,0,.55);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.badge{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:inline-flex;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap:10px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 14px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 999px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid var(--stroke);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(14px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 18px 42px var(--shadow);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: rgba(255,255,255,.9);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight:700;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.08em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-transform: uppercase;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.panel{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>width:min(860px, calc(100vw - 32px));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 22px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(255,255,255,.16);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 28px 70px rgba(0,0,0,.55);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(16px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.grid{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:grid;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>grid-template-columns: repeat(4, 1fr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.diff{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>cursor:pointer;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 18px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 14px 14px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color:#fff;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-align:left;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.06));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(255,255,255,.16);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 18px 46px rgba(0,0,0,.45);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:relative;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-family: "Oxanium", sans-serif;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.diff::before{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>content:"";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:-2px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(500px 220px at 30% 20%, rgba(34,211,238,.28), transparent 55%),</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>radial-gradient(420px 220px at 90% 80%, rgba(124,58,237,.32), transparent 55%);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>opacity:.8;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.diff:hover{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transform: translateY(-3px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-color: rgba(255,255,255,.28);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 26px 64px rgba(0,0,0,.55);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.diffName{ position:relative; z-index:1; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.diffDesc{ position:relative; z-index:1; margin-top:6px; color: rgba(255,255,255,.78); font-weight:600; font-size:13px; line-height:1.3; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hint{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin-top: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: rgba(255,255,255,.75);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight:600;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>line-height:1.55;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-align:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 14px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.kbd{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:inline-flex;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>justify-content:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 2px 8px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 8px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.18);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.25);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight:800;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.06em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 12px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin: 0 3px;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* End overlay */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#end{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>flex-direction:column;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>justify-content:center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gap:16px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:60;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(10,14,30,.78), rgba(10,14,30,.92));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>backdrop-filter: blur(16px);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.endTitle{ font-size: clamp(28px, 5vw, 54px); font-weight: 900; letter-spacing:.06em; margin:0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.endScore{ font-size: clamp(20px, 4vw, 34px); font-weight: 800; color: var(--gold); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.endMsg{ max-width: 860px; padding: 0 18px; text-align:center; color: rgba(255,255,255,.88); font-weight: 600; line-height:1.75; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Floating hit bubble (anchored near target, clamped inside viewport) */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hitBubble{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:80;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>max-width: min(360px, calc(100vw - 16px));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 12px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,.92);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: #0b1020;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 800;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 18px 50px rgba(0,0,0,.45);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(0,0,0,.08);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transform-origin: left center;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>animation: pop .18s ease-out;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hitBubble small{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>display:block;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>margin-top:4px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight:700;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>opacity:.75;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.04em;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes pop{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>from{ transform: translate3d(0,6px,0) scale(.92); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>to{ transform: translate3d(0,0,0) scale(1); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* little arrow */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hitBubble::after{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>content:"";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>width: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>height: 10px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,.92);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>left: -5px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>top: 16px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transform: rotate(45deg);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-left: 1px solid rgba(0,0,0,.08);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-bottom: 1px solid rgba(0,0,0,.08);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* tweak arrow when bubble is on the left */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.hitBubble.leftSide::after{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>left: auto;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>right: -5px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transform: rotate(225deg);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-left: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-bottom: none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-right: 1px solid rgba(0,0,0,.08);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>border-top: 1px solid rgba(0,0,0,.08);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Combo banner */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#combo{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>left:50%;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>top:50%;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>transform: translate(-50%,-50%);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: clamp(34px, 6vw, 72px);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 900;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.06em;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>color: #fff;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-shadow:</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 0 26px rgba(34,211,238,.35),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 0 32px rgba(124,58,237,.32),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>0 20px 70px rgba(0,0,0,.7);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>opacity:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:40;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#combo.show{ animation: combo .9s ease-out forwards; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes combo{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0%{ opacity:0; transform: translate(-50%,-50%) scale(.75) rotate(-6deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>20%{ opacity:1; transform: translate(-50%,-50%) scale(1.1) rotate(2deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>70%{ opacity:1; transform: translate(-50%,-50%) scale(1.02) rotate(-1deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>100%{ opacity:0; transform: translate(-50%,-50%) scale(.9) rotate(0deg); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Floating wine glasses animation */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.floaters{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>inset:0;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:55;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.floater{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 34px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>opacity:.28;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>filter: drop-shadow(0 12px 24px rgba(0,0,0,.35));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>animation: floatUp var(--dur, 10s) linear infinite;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes floatUp{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0%{ transform: translate3d(0, 110vh, 0) rotate(0deg) scale(var(--s,1)); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>10%{ opacity: var(--o,.28); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>90%{ opacity: var(--o,.28); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>100%{ transform: translate3d(0, -140px, 0) rotate(360deg) scale(var(--s,1)); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Mobile adjustments */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@media (max-width: 900px){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.grid{ grid-template-columns: repeat(2, 1fr); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>#hud{ inset: 14px 14px auto 14px; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>#topRight{ top:14px; right:14px; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>.hudCard{ min-width: 120px; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Animation doigt d'honneur (grosse et animée) */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>.middleFinger{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>font-size: 72px;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>z-index:90;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pointer-events:none;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>animation: fingerPop 1.15s cubic-bezier(.16,1,.3,1) forwards;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>text-shadow: 0 0 20px rgba(255,255,255,.55), 0 10px 34px rgba(0,0,0,.55);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>filter: drop-shadow(0 18px 26px rgba(0,0,0,.35));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>will-change: transform, opacity;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes fingerPop{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0%{ transform: translate(-50%,-50%) scale(0) rotate(var(--r, -16deg)); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>14%{ transform: translate(-50%,-50%) scale(1.55) rotate(calc(var(--r, -16deg) * -0.35)); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>34%{ transform: translate(-50%,-50%) scale(1.25) rotate(calc(var(--r, -16deg) * 0.25)); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>72%{ transform: translate(-50%,-50%) scale(1.32) rotate(calc(var(--r, -16deg) * -0.15)); opacity:1; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>100%{ transform: translate(-50%,-50%) scale(0.88) rotate(0deg); opacity:0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/* Micro screen shake (feel de hit) */</p>
+<p class="p1"><span class="Apple-converted-space">    </span>#game.shake{ animation: shake .28s ease-out; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>@keyframes shake{</p>
+<p class="p1"><span class="Apple-converted-space">      </span>0%{ transform: translate3d(0,0,0); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>18%{ transform: translate3d(-3px, 2px,0) rotate(-0.2deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>38%{ transform: translate3d(3px, -2px,0) rotate(0.2deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>60%{ transform: translate3d(-2px, -1px,0) rotate(-0.1deg); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>100%{ transform: translate3d(0,0,0); }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="game"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;canvas id="c"&gt;&lt;/canvas&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="hud"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="hudCard" id="hudScore"&gt;&lt;div class="hudLabel"&gt;Score&lt;/div&gt;&lt;div class="hudValue" id="score"&gt;0&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="hudCard" id="hudTime"&gt;&lt;div class="hudLabel"&gt;Temps&lt;/div&gt;&lt;div class="hudValue" id="time"&gt;60&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="hudCard" id="hudHits"&gt;&lt;div class="hudLabel"&gt;Hits&lt;/div&gt;&lt;div class="hudValue" id="hits"&gt;0&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="topRight"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="restartGameBtn"&gt;↻ Restart&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="pauseBtn"&gt;⏸ Pause&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="soundBtn" title="Activer/Désactiver le son"&gt;🔊 Son&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="combo"&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="start"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="floaters" aria-hidden="true"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:6%; --dur:11s; --s:.9; --o:.22;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:18%; --dur:9s; --s:1.1; --o:.28; animation-delay:-2s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:33%; --dur:12s; --s:.8; --o:.18; animation-delay:-6s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:51%; --dur:10s; --s:1.25; --o:.26; animation-delay:-4s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:67%; --dur:13s; --s:.95; --o:.20; animation-delay:-8s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:82%; --dur:9.5s; --s:1.05; --o:.24; animation-delay:-5s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="floater" style="left:92%; --dur:12.5s; --s:.85; --o:.18; animation-delay:-9s;"&gt;🍷&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;img src="./malo.jpg" alt="Malo" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-2deg);"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;img src="./marie.jpg" alt="Marie" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(1deg);"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;img src="./nico.jpg" alt="Nico" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(-1deg);"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;img src="./valentine.jpg" alt="Valentine" style="width:86px;height:86px;border-radius:50%;border:3px solid rgba(255,255,255,.30);object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);transform:rotate(2deg);"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h1 class="title"&gt;MALO'S REVENGE&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="badge"&gt;🎪 Cirque trash • 🍷 Apéro • 🖕 Vengeance&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="hint" style="max-width:860px;padding:0 18px;margin-top:2px;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Bienvenue dans le cirque le plus trash de l'histoire. Malo veut sa revanche.&lt;br/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>Lance des verres de vin sur tes potes qui défilent. Ils vont pleurer, te faire un doigt d'honneur — et toi tu vas kiffer.</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="panel"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="enterSection" style="display:flex;justify-content:center;margin:16px 0 10px;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;button class="btn" id="enterBtn" style="font-size:18px;padding:12px 32px;"&gt;ENTER&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="diffSection" style="display:none;"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="grid"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="diff" data-diff="easy"&gt;&lt;div class="diffName"&gt;Easy&lt;/div&gt;&lt;div class="diffDesc"&gt;Cool &amp; smooth&lt;br/&gt;Pour s'échauffer.&lt;/div&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="diff" data-diff="medium"&gt;&lt;div class="diffName"&gt;Medium&lt;/div&gt;&lt;div class="diffDesc"&gt;Ça commence à piquer&lt;br/&gt;mais c'est gérable.&lt;/div&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="diff" data-diff="hard"&gt;&lt;div class="diffName"&gt;Hard&lt;/div&gt;&lt;div class="diffDesc"&gt;Réflexes obligatoires&lt;br/&gt;sinon c'est honteux.&lt;/div&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button class="diff" data-diff="insane"&gt;&lt;div class="diffName"&gt;Insane&lt;/div&gt;&lt;div class="diffDesc"&gt;Speedrun d'apéro&lt;br/&gt;ça part en orbite.&lt;/div&gt;&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="hint"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Clique pour &lt;b&gt;lancer un verre de vin&lt;/b&gt; 🍷 vers une tête.&lt;br/&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="kbd"&gt;P&lt;/span&gt; pause • &lt;span class="kbd"&gt;R&lt;/span&gt; restart • Le son démarre au premier clic.</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="end"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;h2 class="endTitle"&gt;FIN DE PARTIE&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="endScore"&gt;Score : &lt;span id="finalScore"&gt;0&lt;/span&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="endMsg" id="finalMsg"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="restartBtn"&gt;↻ Rejouer&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* CONFIG (PHOTOS)</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* - Mets les images au même niveau que index.html : malo.jpg, marie.jpg, nico.jpg, valentine.jpg</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* - Ou remplace par des URLs directes (ex: https://i.imgur.com/xxxx.jpg)</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const friends = [</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ id: "malo", name: "Malo", img: "./malo.jpg" },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ id: "marie", name: "Marie", img: "./marie.jpg" },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ id: "ptitnico", name: "PtitNico", img: "./nico.jpg" },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ id: "valentine", name: "Valentine", img: "./valentine.jpg" },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// === IMAGE PRELOADING (fix bubbles vides) ===</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const imageCache = new Map();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function preloadImages(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const f of friends){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const img = new Image();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>img.src = f.img;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>img.onload = () =&gt; imageCache.set(f.id, img);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>imageCache.set(f.id, img); // set immediately to avoid race</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const diff = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>easy: <span class="Apple-converted-space">  </span>{ speed: 2.1, spawnMs: 1900, duration: 60, points: 10 },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>medium: { speed: 3.0, spawnMs: 1400, duration: 60, points: 15 },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hard: <span class="Apple-converted-space">  </span>{ speed: 4.2, spawnMs: 1000, duration: 60, points: 25 },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>insane: { speed: 5.5, spawnMs: 780,<span class="Apple-converted-space">  </span>duration: 60, points: 40 },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// --- FEEL / JOUABILITÉ (ajouts) ---</p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Un arc léger + une durée de vol adaptative = lancers plus naturels et qui atteignent vraiment la cible.</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const GRAVITY = 2600; // px/s²</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const AIM_ASSIST_RADIUS = 120; // px (snap doux vers la tête la plus proche)</p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* HIT MESSAGES (TES PHRASES — CONSERVÉES)</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hitMessagesByCharacter = {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>malo: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"C'est qui ça ?",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Allez l'OM !",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"On va faire comme si rien ne s'était passé.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"T'es perdu ?",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"La vie est tellement injuste!",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// extras</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Frérot… c'était pas ton jour.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Ok, j'avoue… bien joué.",</p>
+<p class="p2"><span class="Apple-converted-space">      </span></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// ajouts</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Encore ? Tu t'acharnes, champion.",</p>
+<p class="p2"><span class="Apple-converted-space">        </span></p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>marie: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Je vais te gifler !",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Ah ouais ?.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Ca part en drame.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"T'as un problème ?",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"On va te dégommer",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// extras</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Ça va mal finir ",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Tu cherches ?",</p>
+<p class="p2"><span class="Apple-converted-space">      </span></p>
+<p class="p2"><span class="Apple-converted-space">     </span></p>
+<p class="p2"><span class="Apple-converted-space">       </span></p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ptitnico: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Rastafarai !",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"On dirait un problème.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"My Bad ",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Merci d'avoir tenté.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Tu t'acharnes ?",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// extras</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"La vibe est cassée.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Pas très zen ça.",</p>
+<p class="p2"><span class="Apple-converted-space">      </span></p>
+<p class="p2"><span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>valentine: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Elle coûte cher !",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"T'as vraiment cru que c'était une bonne idée ?",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"C'était hors budget, désolé.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Tout le monde n'a pas le niveau.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Tu peux pas te le permettre.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// extras</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Retourne en version gratuite.",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>"Désolée, c'est premium ici.",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">    </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const missMessages = [</p>
+<p class="p1"><span class="Apple-converted-space">      </span>"Raté.",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>"Mauvaise trajectoire, nul !",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>"Tu visais la tête ?",</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// ajouts (plus de variété)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>"Tu as lancé avec le cœur.",</p>
+<p class="p1"><span class="Apple-converted-space">      </span>"C'était ambitieux. Trop.",</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const finalMessages = [</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ min: 0, <span class="Apple-converted-space">  </span>max: 9, <span class="Apple-converted-space">  </span>msg: "T'es vraiment nul, même Malo est déçu." },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ min: 10,<span class="Apple-converted-space">  </span>max: 19,<span class="Apple-converted-space">  </span>msg: "Pas mal, mais Malo s'attendait à mieux." },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ min: 20,<span class="Apple-converted-space">  </span>max: 29,<span class="Apple-converted-space">  </span>msg: "Bien joué, Malo commence à pleurer." },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ min: 30,<span class="Apple-converted-space">  </span>max: 39,<span class="Apple-converted-space">  </span>msg: "Impressionnant, Malo est en larmes." },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>{ min: 40,<span class="Apple-converted-space">  </span>max: 9999, msg: "Légende vivante, Malo te respecte enfin." },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* DOM</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const gameEl = document.getElementById("game");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const canvas = document.getElementById("c");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const ctx = canvas.getContext("2d");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const startEl = document.getElementById("start");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const endEl = document.getElementById("end");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const restartBtn = document.getElementById("restartBtn");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hudEl = document.getElementById("hud");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const topRightEl = document.getElementById("topRight");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const pauseBtn = document.getElementById("pauseBtn");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const soundBtn = document.getElementById("soundBtn");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const scoreEl = document.getElementById("score");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const timeEl = document.getElementById("time");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const hitsEl = document.getElementById("hits");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const comboEl = document.getElementById("combo");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const finalScoreEl = document.getElementById("finalScore");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const finalMsgEl = document.getElementById("finalMsg");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* CANVAS SIZE</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function resize(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.width = Math.floor(window.innerWidth * dpr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.height = Math.floor(window.innerHeight * dpr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.style.width = window.innerWidth + "px";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.style.height = window.innerHeight + "px";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.setTransform(dpr, 0, 0, dpr, 0, 0);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>window.addEventListener("resize", resize);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* HELPERS</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const clamp = (v, a, b) =&gt; Math.max(a, Math.min(b, v));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const rand = (a,b) =&gt; a + Math.random() * (b-a);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const pick = arr =&gt; arr[(Math.random() * arr.length) | 0];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function drawImageCover(ctx, img, x, y, w, h){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// center-crop like CSS object-fit: cover</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const iw = img.naturalWidth || img.width;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const ih = img.naturalHeight || img.height;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!iw || !ih) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const r = Math.max(w / iw, h / ih);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const nw = iw * r;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const nh = ih * r;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const cx = x + (w - nw) / 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const cy = y + (h - nh) / 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.drawImage(img, cx, cy, nw, nh);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function showCombo(n){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comboEl.textContent = `COMBO x${n}`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comboEl.classList.remove("show");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>void comboEl.offsetWidth;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comboEl.classList.add("show");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function showHitBubble(text, x, y, who){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// x,y are in viewport coordinates (same as our canvas logical coords)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const el = document.createElement("div");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.className = "hitBubble";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.innerHTML = `${escapeHtml(text)}&lt;small&gt;${escapeHtml(who)}&lt;/small&gt;`;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>gameEl.appendChild(el);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// initial position (to the right of the face)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.left = (x + 18) + "px";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.top<span class="Apple-converted-space">  </span>= (y - 18) + "px";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// clamp inside viewport after we know its size</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const pad = 8;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const r = el.getBoundingClientRect();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let left = parseFloat(el.style.left);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let top = parseFloat(el.style.top);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// if it overflows on the right, flip to the left side</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (left + r.width &gt; window.innerWidth - pad){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>left = x - r.width - 18;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.transformOrigin = "right center";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrow", "left");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--flip", "1");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowSide", "right");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowLeft", "auto");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// clamp within viewport</p>
+<p class="p1"><span class="Apple-converted-space">      </span>left = clamp(left, pad, window.innerWidth - r.width - pad);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>top<span class="Apple-converted-space">  </span>= clamp(top,<span class="Apple-converted-space">  </span>pad, window.innerHeight - r.height - pad);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.left = left + "px";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>el.style.top<span class="Apple-converted-space">  </span>= top + "px";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// If placed on left side, move arrow to right</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const placedLeft = (left &lt; x);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (placedLeft){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.transformOrigin = "right center";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowOnLeft", "0");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowX", "auto");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowR", "-5px");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrowL", "auto");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.setProperty("--arrow", "right");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.classList.add("leftSide");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>setTimeout(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.transition = "opacity .22s ease, transform .22s ease";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.opacity = "0";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>el.style.transform = "translateY(-6px) scale(.98)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>setTimeout(() =&gt; el.remove(), 240);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}, 1050);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function escapeHtml(str){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return String(str)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.replaceAll("&amp;", "&amp;amp;")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.replaceAll("&lt;", "&amp;lt;")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.replaceAll("&gt;", "&amp;gt;")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.replaceAll('"', "&amp;quot;")</p>
+<p class="p1"><span class="Apple-converted-space">        </span>.replaceAll("'", "&amp;#39;");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* AUDIO (ENTRAINANT)</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let audio = null;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function initAudio(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (audio) return audio;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const AC = window.AudioContext || window.webkitAudioContext;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const ctxA = new AC();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const master = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>master.gain.value = 0.55;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const comp = ctxA.createDynamicsCompressor();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.threshold.value = -18;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.knee.value = 24;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.ratio.value = 6;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.attack.value = 0.003;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.release.value = 0.12;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>master.connect(comp);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>comp.connect(ctxA.destination);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// simple "color" filter for music</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const musicBus = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const sfxBus = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicBus.gain.value = 0.9;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>sfxBus.gain.value = 1.0;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const musicLP = ctxA.createBiquadFilter();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicLP.type = "lowpass";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicLP.frequency.value = 9500;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicLP.Q.value = 0.7;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicBus.connect(musicLP);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>musicLP.connect(master);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>sfxBus.connect(master);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const state = {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx: ctxA,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>enabled: true,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>bpm: 142,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>next: 0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>timer: null,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>step: 0,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function now(){ return ctxA.currentTime; }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function tone(freq, t0, dur, type, gain, out=musicBus){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const o = ctxA.createOscillator();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const g = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>o.type = type;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>o.frequency.setValueAtTime(freq, t0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.setValueAtTime(0.0001, t0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.exponentialRampToValueAtTime(gain, t0 + 0.008);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>o.connect(g);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.connect(out);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>o.start(t0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>o.stop(t0 + dur + 0.02);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function noise(t0, dur, gain, hp=6000, out=sfxBus){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const len = Math.max(1, Math.floor(ctxA.sampleRate * dur));</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const buf = ctxA.createBuffer(1, len, ctxA.sampleRate);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const d = buf.getChannelData(0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let i=0;i&lt;len;i++) d[i] = Math.random()*2-1;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const src = ctxA.createBufferSource();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>src.buffer = buf;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const f = ctxA.createBiquadFilter();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>f.type = "highpass";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>f.frequency.setValueAtTime(hp, t0);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>const g = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.setValueAtTime(0.0001, t0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.exponentialRampToValueAtTime(gain, t0 + 0.004);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>src.connect(f);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>f.connect(g);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.connect(out);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>src.start(t0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>src.stop(t0 + dur + 0.02);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// SFX: throw (glass whoosh + clink)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>function sfxThrow(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!state.enabled) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const t = now();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>noise(t, 0.05, 0.07, 1800, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(950, t, 0.06, "sine", 0.10, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(1550, t + 0.012, 0.05, "sine", 0.07, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// SFX: hit (thud + glass crackle)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>function sfxHit(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!state.enabled) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const t = now();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(90, t, 0.10, "sine", 0.22, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(2200, t + 0.02, 0.07, "square", 0.10, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>noise(t + 0.018, 0.10, 0.12, 1200, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function sfxMiss(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!state.enabled) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const t = now();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(420, t, 0.08, "triangle", 0.07, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(330, t + 0.03, 0.09, "sine", 0.05, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// SFX: combo (petit cri de victoire)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>function sfxCombo(n){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!state.enabled) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const t = now();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const base = 520 + Math.min(420, n*18);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(base, t, 0.08, "square", 0.09, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>tone(base*1.33, t+0.04, 0.10, "triangle", 0.07, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>noise(t+0.02, 0.06, 0.06, 5200, sfxBus);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Music: upbeat electro/chiptune-ish groove</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Pattern: kick/snare/hat + bass + arp lead</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const kickSteps = new Set([0, 4, 8, 12, 14]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const snrSteps<span class="Apple-converted-space">  </span>= new Set([4, 12]);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const hatSteps<span class="Apple-converted-space">  </span>= new Set([2, 6, 10, 14]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const bassSeq = [110, 110, 98, 110, 130, 110, 98, 146]; // 8-step</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const arp = [523.25, 659.25, 783.99, 659.25]; // C5 E5 G5 E5</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function schedule(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!state.enabled) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const spb = 60 / state.bpm;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const stepDur = 0.25 * spb;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>while (state.next &lt; now() + 0.12){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const s = state.step % 16;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const t = state.next;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Kick</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (kickSteps.has(s)){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>// short pitch drop</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const o = ctxA.createOscillator();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const g = ctxA.createGain();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.type = "sine";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.frequency.setValueAtTime(150, t);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.frequency.exponentialRampToValueAtTime(46, t + 0.11);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>g.gain.setValueAtTime(0.0001, t);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>g.gain.exponentialRampToValueAtTime(0.26, t + 0.005);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.connect(g);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>g.connect(musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.start(t);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>o.stop(t + 0.18);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Snare</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (snrSteps.has(s)){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>noise(t, 0.06, 0.10, 2000, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>tone(190, t, 0.05, "triangle", 0.07, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Hat</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (hatSteps.has(s)){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>noise(t, 0.03, 0.05, 7000, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Bass (on 8th steps)</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (s % 2 === 0){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const f = bassSeq[(s/2) % bassSeq.length];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>tone(f, t, 0.14, "sawtooth", 0.065, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>// Arp lead (syncopated)</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if ([1, 5, 9, 13].includes(s)){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const f = arp[(s/4) | 0];</p>
+<p class="p1"><span class="Apple-converted-space">            </span>tone(f, t, 0.10, "square", 0.05, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>tone(f/2, t, 0.10, "triangle", 0.03, musicBus);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">          </span>state.step++;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>state.next += stepDur;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function startMusic(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>state.next = now();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>state.step = 0;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (state.timer) clearInterval(state.timer);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>state.timer = setInterval(schedule, 25);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>function stopMusic(){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (state.timer) clearInterval(state.timer);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>state.timer = null;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>audio = {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>state,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>startMusic,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>stopMusic,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sfxThrow,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sfxHit,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sfxMiss,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sfxCombo,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>async resume(){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (ctxA.state === "suspended") {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>try { await ctxA.resume(); } catch(e) {}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>startMusic();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return audio;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function ensureAudio(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const a = initAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>await a.resume();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return a;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function setSoundEnabled(on){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const a = initAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>a.state.enabled = on;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>soundBtn.textContent = on ? "🔊 Son" : "🔇 Son";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* GAME STATE</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>let S = null;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function newState(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>return {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>running:false,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>paused:false,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>d:"easy",</p>
+<p class="p1"><span class="Apple-converted-space">        </span>score:0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>hits:0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>combo:0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>timeLeft:60,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>targets:[],</p>
+<p class="p1"><span class="Apple-converted-space">        </span>projectiles:[],</p>
+<p class="p1"><span class="Apple-converted-space">        </span>particles:[],</p>
+<p class="p1"><span class="Apple-converted-space">        </span>spawnT:0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>lastT:0,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>timerId:null,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>pointer: { x: window.innerWidth/2, y: window.innerHeight/2, has:false },</p>
+<p class="p1"><span class="Apple-converted-space">      </span>};</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function reset(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S = newState();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>updateHud();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function updateHud(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>scoreEl.textContent = S.score;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>timeEl.textContent = S.timeLeft;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hitsEl.textContent = S.hits;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* TARGETS</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function spawnTarget(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const f = friends[(Math.random()*friends.length)|0];</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const size = 148; // bigger faces (jeu vidéo vibe)</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const x = rand(20, window.innerWidth - size - 20);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const y = rand(90, window.innerHeight - size - 140);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const sp = diff[S.d].speed;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const vx = rand(-1, 1) * sp;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const vy = rand(-1, 1) * sp;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Use preloaded image from cache</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const img = imageCache.get(f.id);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!img || !img.complete) {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>console.warn(`Image for ${f.id} not ready, using fallback`);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.targets.push({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>f,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>x,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>y,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>vx,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>vy,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>size,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>img,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>wob: rand(0, Math.PI*2),</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function updateTargets(dt){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const t of S.targets){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>t.wob += dt * 4.2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const wobble = Math.sin(t.wob) * 0.35;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>t.x += (t.vx + wobble) * dt * 60;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>t.y += (t.vy - wobble) * dt * 60;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (t.x &lt; 12){ t.x = 12; t.vx = Math.abs(t.vx); }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (t.x &gt; window.innerWidth - t.size - 12){ t.x = window.innerWidth - t.size - 12; t.vx = -Math.abs(t.vx); }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (t.y &lt; 80){ t.y = 80; t.vy = Math.abs(t.vy); }</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (t.y &gt; window.innerHeight - t.size - 120){ t.y = window.innerHeight - t.size - 120; t.vy = -Math.abs(t.vy); }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function drawTargets(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const t of S.targets){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const cx = t.x + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const cy = t.y + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const r = t.size/2;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// glow ring</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.shadowColor = "rgba(34,211,238,.35)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.shadowBlur = 22;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// outer ring</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(cx, cy, r + 6, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = "rgba(255,255,255,.10)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// mask circle</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(cx, cy, r, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.closePath();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.clip();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (t.img.complete &amp;&amp; (t.img.naturalWidth || t.img.width)){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>drawImageCover(ctx, t.img, t.x, t.y, t.size, t.size);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
+<p class="p1"><span class="Apple-converted-space">          </span>// fallback placeholder</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.fillStyle = "rgba(255,255,255,.12)";</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.fillRect(t.x, t.y, t.size, t.size);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// subtle overlay</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const g = ctx.createLinearGradient(t.x, t.y, t.x + t.size, t.y + t.size);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.addColorStop(0, "rgba(0,0,0,.06)");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>g.addColorStop(1, "rgba(0,0,0,.22)");</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = g;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillRect(t.x, t.y, t.size, t.size);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.restore();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// border</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.strokeStyle = "rgba(255,255,255,.68)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.lineWidth = 4;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(cx, cy, r, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.stroke();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// name tag</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.shadowColor = "transparent";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = "rgba(0,0,0,.55)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const tagW = ctx.measureText(t.f.name).width + 22;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const tagX = cx - tagW/2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const tagY = t.y + t.size + 8;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>roundRect(ctx, tagX, tagY, tagW, 22, 10);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = "rgba(255,255,255,.92)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.font = "700 13px Oxanium";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.textAlign = "center";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.textBaseline = "middle";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillText(t.f.name, cx, tagY + 11);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.restore();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function roundRect(ctx,x,y,w,h,r){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const rr = Math.min(r, w/2, h/2);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.moveTo(x+rr, y);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.arcTo(x+w, y, x+w, y+h, rr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.arcTo(x+w, y+h, x, y+h, rr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.arcTo(x, y+h, x, y, rr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.arcTo(x, y, x+w, y, rr);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.closePath();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* PROJECTILES (LANCER DE VERRE DE VIN — PRO)</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function throwWine(tx, ty){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Origine du lancer (bas centre)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const fromX = window.innerWidth / 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const fromY = window.innerHeight - 84;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// AIM ASSIST: si tu cliques proche d'une tête, ça "snap" doucement sur le centre</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let ax = tx, ay = ty;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let best = null;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let bestD = 1e9;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const t of S.targets){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const cx = t.x + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const cy = t.y + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const d = Math.hypot(ax - cx, ay - cy);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (d &lt; bestD){ bestD = d; best = {cx, cy}; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (best &amp;&amp; bestD &lt;= AIM_ASSIST_RADIUS){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ax = best.cx;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ay = best.cy;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dx = ax - fromX;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dy = ay - fromY;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dist = Math.max(1, Math.hypot(dx, dy));</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Durée adaptative =&gt; le verre arrive vraiment à l'endroit visé</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const baseSpeed = 1550; // px/s (plus nerveux)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dur = clamp(dist / baseSpeed, 0.18, 0.62);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Balistique légère (arc) : vy initial compense la gravité</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const vx = dx / dur;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const vy = (dy - 0.5 * GRAVITY * dur * dur) / dur;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.projectiles.push({</p>
+<p class="p1"><span class="Apple-converted-space">        </span>x: fromX,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>y: fromY,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>vx,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>vy,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>life: dur + 0.35,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rot: rand(0, Math.PI*2),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>rvel: rand(-12, 12),</p>
+<p class="p1"><span class="Apple-converted-space">        </span>sparkle: 1.0,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Petit flash de départ (feedback)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=0;i&lt;10;i++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>S.particles.push({</p>
+<p class="p1"><span class="Apple-converted-space">          </span>x: fromX,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>y: fromY,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vx: rand(-220,220),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vy: rand(-380,-120),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>life: rand(0.12, 0.22),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>size: rand(2,4),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>col: `rgba(251,191,36,${rand(0.25,0.75)})`,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function updateProjectiles(dt){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=S.projectiles.length-1;i&gt;=0;i--){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const p = S.projectiles[i];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// physics</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.vy += GRAVITY * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.x<span class="Apple-converted-space">  </span>+= p.vx * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.y<span class="Apple-converted-space">  </span>+= p.vy * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.rot += p.rvel * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.life -= dt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// trail particles (plus sexy)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const tN = (S.d === "insane") ? 3 : 2;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let k=0;k&lt;tN;k++){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (Math.random() &lt; 0.95){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const wine = Math.random() &lt; 0.35;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.particles.push({</p>
+<p class="p1"><span class="Apple-converted-space">              </span>x: p.x + rand(-6,6),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>y: p.y + rand(-6,6),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>vx: rand(-60,60),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>vy: rand(-60,60),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>life: rand(0.12, 0.22),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>size: rand(2,4),</p>
+<p class="p1"><span class="Apple-converted-space">              </span>col: wine</p>
+<p class="p1"><span class="Apple-converted-space">                </span>? `rgba(251,113,133,${rand(0.25,0.65)})`<span class="Apple-converted-space">  </span>// rosé-chaos</p>
+<p class="p1"><span class="Apple-converted-space">                </span>: `rgba(251,191,36,${rand(0.25,0.75)})`, // or du verre</p>
+<p class="p1"><span class="Apple-converted-space">            </span>});</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (p.life &lt;= 0 || p.x &lt; -120 || p.x &gt; window.innerWidth+120 || p.y &lt; -140 || p.y &gt; window.innerHeight+140){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>S.projectiles.splice(i,1);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>// small miss feedback (sometimes)</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (Math.random() &lt; 0.45){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>audio?.sfxMiss?.();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>showHitBubble(pick(missMessages), clamp(p.x, 60, window.innerWidth-60), clamp(p.y, 80, window.innerHeight-120), "Miss");</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function drawProjectiles(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.font = "44px system-ui";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.textAlign = "center";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.textBaseline = "middle";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const p of S.projectiles){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.translate(p.x, p.y);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.rotate(p.rot);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.shadowColor = "rgba(251,191,36,.35)";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.shadowBlur = 22;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillText("🍷", 0, 0);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.restore();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.restore();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* PARTICLES</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function burst(x,y){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=0;i&lt;18;i++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>S.particles.push({</p>
+<p class="p1"><span class="Apple-converted-space">          </span>x, y,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vx: rand(-260,260),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vy: rand(-320,200),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>life: rand(0.25, 0.45),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>size: rand(2,5),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>col: `rgba(34,211,238,${rand(0.25,0.8)})`,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=0;i&lt;10;i++){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>S.particles.push({</p>
+<p class="p1"><span class="Apple-converted-space">          </span>x, y,</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vx: rand(-220,220),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>vy: rand(-220,220),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>life: rand(0.2, 0.35),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>size: rand(3,6),</p>
+<p class="p1"><span class="Apple-converted-space">          </span>col: `rgba(124,58,237,${rand(0.2,0.7)})`,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>});</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function updateParticles(dt){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=S.particles.length-1;i&gt;=0;i--){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const p = S.particles[i];</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.x += p.vx * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.y += p.vy * dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.vx *= Math.pow(0.08, dt); // friction</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.vy += 520 * dt; // gravity</p>
+<p class="p1"><span class="Apple-converted-space">        </span>p.life -= dt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (p.life &lt;= 0) S.particles.splice(i,1);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function drawParticles(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const p of S.particles){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Ring marker (vx=vy=0 and transparent color)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (p.vx === 0 &amp;&amp; p.vy === 0 &amp;&amp; p.col === "rgba(255,255,255,.0)"){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const t = clamp(p.life / 0.22, 0, 1);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const rr = 18 + (1 - t) * 34;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.globalAlpha = t;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.strokeStyle = "rgba(34,211,238,.55)";</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.lineWidth = 3;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.arc(p.x, p.y, rr, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.stroke();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.strokeStyle = "rgba(124,58,237,.35)";</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.lineWidth = 6;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.arc(p.x, p.y, rr + 6, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.stroke();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>ctx.restore();</p>
+<p class="p1"><span class="Apple-converted-space">          </span>continue;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fillStyle = p.col;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>ctx.fill();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* COLLISIONS</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function collide(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let pi=S.projectiles.length-1; pi&gt;=0; pi--){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>const p = S.projectiles[pi];</p>
+<p class="p1"><span class="Apple-converted-space">        </span>for (let ti=S.targets.length-1; ti&gt;=0; ti--){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const t = S.targets[ti];</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const cx = t.x + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const cy = t.y + t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const r = t.size/2;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>const d = Math.hypot(p.x - cx, p.y - cy);</p>
+<p class="p1"><span class="Apple-converted-space">          </span>if (d &lt; r - 6){</p>
+<p class="p1"><span class="Apple-converted-space">            </span>// HIT</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.projectiles.splice(pi,1);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.targets.splice(ti,1);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.hits++;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.combo++;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.score += diff[S.d].points + Math.min(40, (S.combo-1) * 2);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>updateHud();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// effects</p>
+<p class="p1"><span class="Apple-converted-space">            </span>audio?.sfxHit?.();</p>
+<p class="p1"><span class="Apple-converted-space">            </span>burst(cx, cy);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>// micro shake + ring</p>
+<p class="p1"><span class="Apple-converted-space">            </span>gameEl.classList.remove("shake");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>void gameEl.offsetWidth;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>gameEl.classList.add("shake");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// ring visuel (quick)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>S.particles.push({ x: cx, y: cy, vx: 0, vy: 0, life: 0.22, size: 2, col: "rgba(255,255,255,.0)" });</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// Doigt d'honneur GROS et ANIMÉ (feedback de hit)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const finger = document.createElement("div");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>finger.className = "middleFinger";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>finger.textContent = "🖕";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>finger.style.left = cx + "px";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>finger.style.top = cy + "px";</p>
+<p class="p1"><span class="Apple-converted-space">            </span>finger.style.setProperty("--r", (rand(-22, 22)).toFixed(1) + "deg");</p>
+<p class="p1"><span class="Apple-converted-space">            </span>gameEl.appendChild(finger);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>setTimeout(() =&gt; finger.remove(), 1200);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>// message near face (clamped — won't go off-screen)</p>
+<p class="p1"><span class="Apple-converted-space">            </span>const msg = pick(hitMessagesByCharacter[t.f.id] || ["Touché !"]);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>showHitBubble(msg, cx + r + 8, cy, t.f.name);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>if (S.combo === 3 || S.combo === 5 || (S.combo &gt; 5 &amp;&amp; S.combo % 5 === 0)){</p>
+<p class="p1"><span class="Apple-converted-space">              </span>showCombo(S.combo);</p>
+<p class="p1"><span class="Apple-converted-space">              </span>audio?.sfxCombo?.(S.combo);</p>
+<p class="p1"><span class="Apple-converted-space">            </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">            </span>break;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* LOOP</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function drawAim(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// Crosshair viseur (optionnel mais sympa)</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.pointer.has) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.save();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.strokeStyle = "rgba(251,191,36,.55)";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.lineWidth = 2;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const cx = S.pointer.x;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const cy = S.pointer.y;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const r = 18;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.arc(cx, cy, r, 0, Math.PI*2);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.stroke();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>// crosshair lines</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.beginPath();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.moveTo(cx - r - 8, cy);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.lineTo(cx - r - 2, cy);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.moveTo(cx + r + 2, cy);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.lineTo(cx + r + 8, cy);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.moveTo(cx, cy - r - 8);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.lineTo(cx, cy - r - 2);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.moveTo(cx, cy + r + 2);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.lineTo(cx, cy + r + 8);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.stroke();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.restore();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function loop(ts){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.running) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.lastT) S.lastT = ts;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const dt = clamp((ts - S.lastT) / 1000, 0, 0.033);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.lastT = ts;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.paused){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>S.spawnT += dt * 1000;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (S.spawnT &gt;= diff[S.d].spawnMs){</p>
+<p class="p1"><span class="Apple-converted-space">          </span>S.spawnT = 0;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>spawnTarget();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>updateTargets(dt);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>updateProjectiles(dt);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>updateParticles(dt);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>collide();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// draw</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.clearRect(0,0,window.innerWidth, window.innerHeight);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// parallax glow vignette</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const vg = ctx.createRadialGradient(window.innerWidth*0.5, window.innerHeight*0.45, 120, window.innerWidth*0.5, window.innerHeight*0.5, Math.max(window.innerWidth, window.innerHeight));</p>
+<p class="p1"><span class="Apple-converted-space">      </span>vg.addColorStop(0, "rgba(255,255,255,.03)");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>vg.addColorStop(1, "rgba(0,0,0,.28)");</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillStyle = vg;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>ctx.fillRect(0,0,window.innerWidth, window.innerHeight);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>drawParticles();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>drawTargets();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>drawProjectiles();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>drawAim();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>requestAnimationFrame(loop);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* TIMER</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>function startTimer(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (S.timerId) clearInterval(S.timerId);</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.timerId = setInterval(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (!S.running || S.paused) return;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>S.timeLeft--;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>updateHud();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (S.timeLeft &lt;= 0) endGame();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}, 1000);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* START / END</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>async function startGame(which){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>reset();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.d = which;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.timeLeft = diff[which].duration;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>await ensureAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>initAudio().startMusic();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>startEl.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>endEl.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.style.display = "block";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hudEl.style.display = "flex";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>topRightEl.style.display = "flex";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.running = true;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.paused = false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pauseBtn.textContent = "⏸ Pause";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>// spawn initial targets</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (let i=0;i&lt;4;i++) spawnTarget();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>startTimer();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>requestAnimationFrame(loop);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function endGame(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.running = false;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (S.timerId) clearInterval(S.timerId);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>initAudio().stopMusic();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>canvas.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>hudEl.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>topRightEl.style.display = "none";</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>finalScoreEl.textContent = S.score;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>let msg = finalMessages[0].msg;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>for (const m of finalMessages){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (S.score &gt;= m.min &amp;&amp; S.score &lt;= m.max){ msg = m.msg; break; }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">      </span>finalMsgEl.textContent = msg;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>endEl.style.display = "flex";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function restart(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>endEl.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>startEl.style.display = "flex";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>function togglePause(){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.running) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.paused = !S.paused;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>pauseBtn.textContent = S.paused ? "▶ Reprendre" : "⏸ Pause";</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* INPUTS</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// Suivi du viseur (plus jouable)</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.addEventListener("pointermove", (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const rect = canvas.getBoundingClientRect();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.pointer.x = e.clientX - rect.left;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.pointer.y = e.clientY - rect.top;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.pointer.has = true;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.addEventListener("pointerleave", () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>S.pointer.has = false;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas.addEventListener("click", async (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (!S.running || S.paused) return;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>await ensureAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>initAudio().sfxThrow();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">      </span>const rect = canvas.getBoundingClientRect();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const x = e.clientX - rect.left;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const y = e.clientY - rect.top;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>throwWine(x, y);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>// === ENTER BUTTON LOGIC ===</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const enterBtn = document.getElementById("enterBtn");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const enterSection = document.getElementById("enterSection");</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const diffSection = document.getElementById("diffSection");</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (enterBtn &amp;&amp; enterSection &amp;&amp; diffSection){</p>
+<p class="p1"><span class="Apple-converted-space">      </span>enterBtn.addEventListener("click", async () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Warm up audio (helps iOS)</p>
+<p class="p1"><span class="Apple-converted-space">        </span>try { await ensureAudio(); } catch(e) { console.warn("Audio warmup failed", e); }</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>// Hide ENTER, show difficulty buttons</p>
+<p class="p1"><span class="Apple-converted-space">        </span>enterSection.style.display = "none";</p>
+<p class="p1"><span class="Apple-converted-space">        </span>diffSection.style.display = "block";</p>
+<p class="p1"><span class="Apple-converted-space">      </span>});</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>document.querySelectorAll(".diff").forEach(btn =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>btn.addEventListener("click", () =&gt; startGame(btn.dataset.diff));</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>restartBtn.addEventListener("click", restart);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>pauseBtn.addEventListener("click", togglePause);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>soundBtn.addEventListener("click", async () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>await ensureAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const a = initAudio();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>setSoundEnabled(!a.state.enabled);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>window.addEventListener("keydown", (e) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>const k = e.key.toLowerCase();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (k === "p") togglePause();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>if (k === "r"){</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (S.running) endGame();</p>
+<p class="p1"><span class="Apple-converted-space">        </span>restart();</p>
+<p class="p1"><span class="Apple-converted-space">      </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>/****</p>
+<p class="p1"><span class="Apple-converted-space">     </span>* INIT</p>
+<p class="p1"><span class="Apple-converted-space">     </span>****/</p>
+<p class="p1"><span class="Apple-converted-space">    </span>preloadImages();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>reset();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>resize();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setSoundEnabled(true);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
 </body>
 </html>
