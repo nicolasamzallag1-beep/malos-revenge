@@ -427,7 +427,7 @@
 
  <div id="hud">
  <div class="hudCard" id="hudScore"><div class="hudLabel">Score</div><div class="hudValue" id="score">0</div></div>
- <div class="hudCard" id="hudTime"><div class="hudLabel">Temps</div><div class="hudValue" id="time">60</div></div>
+ <div class="hudCard" id="hudTime"><div class="hudLabel">Temps</div><div class="hudValue" id="time">30</div></div>
  <div class="hudCard" id="hudHits"><div class="hudLabel">Hits</div><div class="hudValue" id="hits">0</div></div>
  </div>
 
@@ -535,24 +535,24 @@
  const hitMessagesByCharacter = {
  malo: [
  "Mais c'est qui ça ?",
- "Droit au But !",
+ "DVas réviser, il y a le bac en fin d'année !",
  "On va faire comme si rien ne s'était passé.",
  "T'es perdu ?",
- "La vie est tellement monotone !",
+ "La vie est tellement monotone, il faut rigoler !",
  // extras
- "Frérot… c'était pas ton jour.",
+ "C'était pas ton jour.",
  "Ok, j'avoue… bien joué.",
  
  // ajouts
- "Encore ? Tu t'acharnes, champion.",
+ "Tu t'acharnes, champion.",
  
  ],
  marie: [
- "On ouvre une autre bouteille ?",
- "Ah ouais...pfff ?.",
- "Ca part en drame.",
+ "On ouvre une bouteille ?",
+ "Ca suffit !",
+ "Tu te calmes !",
  "T'as un problème ?",
- "On va tous vous dégommer",
+ "Je vais vous dégommer",
  // extras
  "Ça va mal finir ",
 
@@ -561,13 +561,13 @@
  
  ],
  ptitnico: [
- "Peace !",
- "On dirait un problème.",
- "Ah bon ? ",
+ "Peace & Love!",
+ "On se détend ",
+ "T'as pas une clope ? ",
  "Merci d'avoir tenté.",
  "Tu t'acharnes ?",
  // extras
- "La vibe est cassée.",
+ "Bad vibe",
  "Pas très zen ça.",
  
  
@@ -575,12 +575,12 @@
  valentine: [
  "Elle coûte cher !",
  "T'as vraiment cru que c'était une bonne idée ?",
- "Hors budget, désolé.",
+ "Sorry, I don't speak French ",
  "Tout le monde n'a pas le niveau.",
- "Tu peux pas te le permettre.",
+ "Je pars, j'au une soirée ce soir !",
  // extras
  "Retourne en version gratuite.",
- "Désolée, c'est premium ici.",
+ "Désolée, t'as pas le droit",
  ],
  };
 
@@ -590,17 +590,17 @@
  "Malo s'attendait à mieux",
  
  // ajouts (plus de variété)
- "Tu as lancé avec le cœur.",
+ "Tu as lancé avec le cœur, dommage.",
  "C'était ambitieux. Trop.",
  
  ];
 
  const finalMessages = [
- { min: 0,  max: 9,  msg: "T'es vraiment nul, même Malo est déçu." },
- { min: 10, max: 19, msg: "Pas mal, mais Malo s'attendait à mieux." },
- { min: 20, max: 29, msg: "Bien joué, Malo commence à pleurer." },
- { min: 30, max: 39, msg: "Impressionnant, Malo est en larmes." },
- { min: 40, max: 9999, msg: "Légende vivante, Malo te respecte enfin." },
+ { min: 0,  max: 599,  msg: "T'es vraiment nul, même Malo est déçu." },
+ { min: 600, max: 1199, msg: "Pas mal, mais Malo s'attendait à mieux." },
+ { min: 2000, max: 2999, msg: "Bien joué, Malo commence à pleurer." },
+ { min: 30000, max: 3999, msg: "Impressionnant, Malo est en larmes." },
+ { min: 40000, max: 9999, msg: "Légende vivante, Malo te respecte enfin." },
  ];
 
  /****
